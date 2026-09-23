@@ -1,0 +1,226 @@
+// NovaCure Surgimed Suppliers — Phase 1: product master data schema
+// Multi-brand healthcare e-commerce platform. First brand: Craftscare (orthopaedic products, Nepal).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Brand — a storefront brand on the multi-brand platform (e.g. Craftscare).
+// ---------------------------------------------------------------------------
+model Brand {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  logo        String?
+  description String?
+
+  categories Category[]
+  products   Product[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("brands")
+}
+
+// ---------------------------------------------------------------------------
+// Category — hierarchical, scoped to a single brand (self-referencing tree).
+// ---------------------------------------------------------------------------
+model Category {
+  id       String  @id @default(cuid())
+  name     String
+  slug     String
+  brandId  String  @map("brand_id")
+  brand    Brand   @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  parentCategoryId String?    @map("parent_category_id")
+  parentCategory   Category?  @relation("CategoryToSubcategory", fields: [parentCategoryId], references: [id], onDelete: Restrict)
+  subCategories    Category[] @relation("CategoryToSubcategory")
+
+  products Product[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // A slug only needs to be unique within a brand, not globally.
+  @@unique([brandId, slug])
+  @@index([parentCategoryId])
+  @@map("categories")
+}
+
+enum ProductStatus {
+  draft
+  needs_verification
+  verified
+  published
+}
+
+enum PublicationStatus {
+  unpublished
+  published
+}
+
+// ---------------------------------------------------------------------------
+// Product — one catalogue product. Size/price/SKU detail lives on
+// ProductVariant, since the source catalogue is priced per size.
+// ---------------------------------------------------------------------------
+model Product {
+  id       String @id @default(cuid())
+  brandId  String @map("brand_id")
+  brand    Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  categoryId String   @map("category_id")
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  name               String
+  rawCatalogueName   String  @map("raw_catalogue_name")
+  manufacturerRefCode String? @map("manufacturer_ref_code")
+  slug               String  @unique
+
+  shortDescription String? @map("short_description")
+  fullDescription  String? @map("full_description")
+  features         String?
+
+  hsCode String? @map("hs_code")
+
+  status            ProductStatus      @default(draft)
+  publicationStatus PublicationStatus  @default(unpublished) @map("publication_status")
+
+  seoTitle       String? @map("seo_title")
+  seoDescription String? @map("seo_description")
+  seoKeywords    String? @map("seo_keywords")
+
+  variants          ProductVariant[]
+  images            ProductImage[]
+  verificationFlags VerificationFlag[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([brandId])
+  @@index([categoryId])
+  @@index([status])
+  @@map("products")
+}
+
+enum VatStatus {
+  VAT
+  NON_VAT
+}
+
+enum StockStatus {
+  in_stock
+  out_of_stock
+  discontinued
+  unknown
+}
+
+// ---------------------------------------------------------------------------
+// ProductVariant — one sellable unit of a Product (a size, or a pack size
+// for consumables). One row per CSV import row.
+// ---------------------------------------------------------------------------
+model ProductVariant {
+  id        String  @id @default(cuid())
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  sizeLabel String @map("size_label")
+  sku       String @unique
+  uom       String
+
+  // Internal cost price — never expose outside the database/service layer.
+  // Nullable: a handful of source rows have no stockist rate or retail price
+  // yet (see VerificationFlag "missing_price" on the product).
+  stockistRate Decimal? @map("stockist_rate") @db.Decimal(10, 2)
+  retailPrice  Decimal? @map("retail_price") @db.Decimal(10, 2)
+  mrp          Decimal  @db.Decimal(10, 2)
+
+  vatStatus   VatStatus   @map("vat_status")
+  stockStatus StockStatus @default(unknown) @map("stock_status")
+
+  // Free-form measurement detail (dimensions, weight, size-chart data, etc.)
+  // that doesn't warrant its own column and varies by product type.
+  measurementData Json? @map("measurement_data")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+enum ProductImageType {
+  primary
+  secondary
+  detail
+  packaging
+  size_guide
+}
+
+enum ImageSource {
+  catalogue_scan
+  manufacturer
+  own_photograph
+  ai_cleaned
+}
+
+enum ImageStatus {
+  pending
+  available
+}
+
+// ---------------------------------------------------------------------------
+// ProductImage — image assets for a product. Phase 1 stores rows with
+// image_status = pending for products with no photo yet (see CSV notes).
+// ---------------------------------------------------------------------------
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  type ProductImageType
+
+  originalPath  String? @map("original_path")
+  webPath       String? @map("web_path")
+  thumbnailPath String? @map("thumbnail_path")
+
+  source ImageSource
+
+  altText String? @map("alt_text")
+
+  imageStatus ImageStatus @default(pending) @map("image_status")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+// ---------------------------------------------------------------------------
+// VerificationFlag — data-quality issues surfaced during import/review,
+// e.g. price discrepancies between merged catalogue rows, missing ref
+// codes, missing photos. Resolved by an admin later (Phase 2+).
+// ---------------------------------------------------------------------------
+model VerificationFlag {
+  id        String  @id @default(cuid())
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  issueType String  @map("issue_type")
+  note      String?
+  resolved  Boolean @default(false)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([productId])
+  @@index([resolved])
+  @@map("verification_flags")
+}
