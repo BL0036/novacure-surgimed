@@ -7,16 +7,14 @@ export function SiteHeader() {
     <header className="border-b border-border bg-background">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-6 px-6 py-4">
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#050b23] p-1">
-            <Image
-              src="/brand/novacure-logo.png"
-              alt={`${SITE_NAME} logo`}
-              width={28}
-              height={28}
-              className="h-full w-full object-contain"
-              priority
-            />
-          </span>
+          <Image
+            src="/brand/novacure-logo.png"
+            alt={`${SITE_NAME} logo`}
+            width={36}
+            height={36}
+            className="h-9 w-9 rounded-lg object-cover"
+            priority
+          />
           <span className="text-lg font-semibold tracking-tight text-foreground">
             {SITE_NAME}
           </span>
