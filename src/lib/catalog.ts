@@ -63,9 +63,7 @@ export async function getCategoryBySlug(
 
 /** Distinct size labels actually in stock for a category's published
  *  products — pulled from real ProductVariant rows, never a hardcoded list. */
-export async function getCategorySizeLabels(
-  categoryId: string,
-): Promise<string[]> {
+export async function getCategorySizeLabels(categoryId: string): Promise<string[]> {
   try {
     const pool = getPool();
     const res = await pool.query<{ size_label: string }>(
@@ -173,10 +171,7 @@ export interface SearchResult {
 
 /** Basic ILIKE search across product name, raw catalogue name, and
  *  category name — sufficient at ~80 products (Phase 4 plan §3). */
-export async function searchProducts(
-  query: string,
-  page = 1,
-): Promise<SearchResult> {
+export async function searchProducts(query: string, page = 1): Promise<SearchResult> {
   const trimmed = query.trim();
   if (!trimmed) {
     return { results: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 1 };

@@ -47,7 +47,7 @@ const brandSlug = (args["brand-slug"] as string) || slugify(brandName);
 
 if (!csvPath) {
   console.error(
-    "Usage: npm run import:products -- --file=./path/to.csv [--brand-name=\"Craftscare\"] [--brand-slug=craftscare] [--dry-run]"
+    'Usage: npm run import:products -- --file=./path/to.csv [--brand-name="Craftscare"] [--brand-slug=craftscare] [--dry-run]',
   );
   process.exit(1);
 }
@@ -168,7 +168,7 @@ async function main() {
        VALUES ($1, $2, $3, now())
        ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, updated_at = now()
        RETURNING id`,
-      [brandId, brandName, brandSlug]
+      [brandId, brandName, brandSlug],
     );
     const resolvedBrandId = brandRes.rows[0].id;
     summary.brand = `${brandName} (${brandSlug})`;
@@ -178,7 +178,7 @@ async function main() {
     // for why category strings aren't split into a parent/child hierarchy.
     const categoryIdByName = new Map<string, string>();
     const uniqueCategoryNames = Array.from(
-      new Set(rows.map((r) => cleanStr(r.category)).filter(Boolean))
+      new Set(rows.map((r) => cleanStr(r.category)).filter(Boolean)),
     );
     for (const name of uniqueCategoryNames) {
       const slug = slugify(name);
@@ -187,7 +187,7 @@ async function main() {
          VALUES ($1, $2, $3, $4, now())
          ON CONFLICT (brand_id, slug) DO UPDATE SET name = EXCLUDED.name, updated_at = now()
          RETURNING id`,
-        [randomUUID(), name, slug, resolvedBrandId]
+        [randomUUID(), name, slug, resolvedBrandId],
       );
       categoryIdByName.set(name, res.rows[0].id);
       summary.categoriesCreated++;
@@ -203,7 +203,7 @@ async function main() {
       const categoryId = categoryIdByName.get(categoryName);
       if (!categoryId) {
         summary.warnings.push(
-          `Product "${productName}": category "${categoryName}" missing/blank — row skipped entirely.`
+          `Product "${productName}": category "${categoryName}" missing/blank — row skipped entirely.`,
         );
         continue;
       }
@@ -213,8 +213,8 @@ async function main() {
         new Set(
           groupRows
             .map((r) => cleanStr(r.raw_catalogue_name))
-            .filter((v) => v && v !== rawCatalogueName)
-        )
+            .filter((v) => v && v !== rawCatalogueName),
+        ),
       );
 
       const refCode =
@@ -224,8 +224,8 @@ async function main() {
         new Set(
           groupRows
             .map((r) => nullableStr(r.manufacturer_ref_code))
-            .filter((v): v is string => Boolean(v) && v !== refCode)
-        )
+            .filter((v): v is string => Boolean(v) && v !== refCode),
+        ),
       );
 
       const hsCode =
@@ -235,7 +235,7 @@ async function main() {
       // so a product is only as "trusted" as its weakest data point.
       const mappedStatuses = groupRows.map((r) => mapStatus(r.status));
       const productStatus = mappedStatuses.reduce((worst, cur) =>
-        STATUS_RANK[cur] < STATUS_RANK[worst] ? cur : worst
+        STATUS_RANK[cur] < STATUS_RANK[worst] ? cur : worst,
       );
 
       const slug = slugify(productName);
@@ -263,7 +263,7 @@ async function main() {
           slug,
           hsCode,
           productStatus,
-        ]
+        ],
       );
       const productId = productRes.rows[0].id;
       summary.productsUpserted++;
@@ -273,7 +273,7 @@ async function main() {
       // duplicate flags. Flags already marked resolved=true are left alone.
       await client.query(
         `DELETE FROM verification_flags WHERE product_id = $1 AND resolved = false`,
-        [productId]
+        [productId],
       );
 
       if (rawNameAlternates.length > 0) {
@@ -284,7 +284,7 @@ async function main() {
             randomUUID(),
             productId,
             `Variant rows used different catalogue names: ${rawNameAlternates.join(", ")} (product uses "${rawCatalogueName}")`,
-          ]
+          ],
         );
         summary.flagsInserted++;
       }
@@ -297,7 +297,7 @@ async function main() {
             randomUUID(),
             productId,
             `Variant rows used different manufacturer ref codes: ${refCodeAlternates.join(", ")} (product uses "${refCode}")`,
-          ]
+          ],
         );
         summary.flagsInserted++;
       }
@@ -343,7 +343,7 @@ async function main() {
             retailPrice,
             mrp,
             vatStatus,
-          ]
+          ],
         );
         summary.variantsUpserted++;
 
@@ -355,7 +355,12 @@ async function main() {
           await client.query(
             `INSERT INTO verification_flags (id, product_id, issue_type, note, updated_at)
              VALUES ($1,$2,$3,$4,now())`,
-            [randomUUID(), productId, cleanStr(row.status) || rowStatus, `[${sku}] ${notes}`]
+            [
+              randomUUID(),
+              productId,
+              cleanStr(row.status) || rowStatus,
+              `[${sku}] ${notes}`,
+            ],
           );
           summary.flagsInserted++;
         }
@@ -370,7 +375,7 @@ async function main() {
               `[${sku}] Missing ${stockistRate === null ? "stockist_rate" : ""}${
                 stockistRate === null && retailPrice === null ? " and " : ""
               }${retailPrice === null ? "retail_price" : ""} in source CSV.`,
-            ]
+            ],
           );
           summary.flagsInserted++;
         }

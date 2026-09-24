@@ -1,11 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/seo";
-import {
-  PRIMARY_NAV,
-  UTILITY_NAV,
-  BRANDS,
-  CRAFTSCARE_CATEGORIES,
-} from "@/lib/site";
+import { PRIMARY_NAV, UTILITY_NAV, BRANDS, CRAFTSCARE_CATEGORIES } from "@/lib/site";
 import { slugify } from "@/lib/slugify";
 
 // Reflects the Phase 2 route structure plus the brand-namespaced
@@ -31,18 +26,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }));
 
   // Brand-namespaced category pages, e.g. /craftscare/knee
-  const craftscareCategoryRoutes: MetadataRoute.Sitemap =
-    CRAFTSCARE_CATEGORIES.map((category) => ({
+  const craftscareCategoryRoutes: MetadataRoute.Sitemap = CRAFTSCARE_CATEGORIES.map(
+    (category) => ({
       url: `${SITE_URL}/craftscare/${slugify(category)}`,
       lastModified: now,
-    }));
+    }),
+  );
 
   // Cross-brand category aggregate pages, e.g. /categories/knee
-  const categoryAggregateRoutes: MetadataRoute.Sitemap =
-    CRAFTSCARE_CATEGORIES.map((category) => ({
+  const categoryAggregateRoutes: MetadataRoute.Sitemap = CRAFTSCARE_CATEGORIES.map(
+    (category) => ({
       url: `${SITE_URL}/categories/${slugify(category)}`,
       lastModified: now,
-    }));
+    }),
+  );
 
   return [
     ...staticRoutes,

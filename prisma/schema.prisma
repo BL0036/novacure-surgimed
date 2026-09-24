@@ -206,7 +206,7 @@ model ProductImage {
 // ---------------------------------------------------------------------------
 // VerificationFlag — data-quality issues surfaced during import/review,
 // e.g. price discrepancies between merged catalogue rows, missing ref
-// codes, missing photos. Resolved by an admin later (Phase 2+).
+// codes, missing photos. Resolved by an admin later (Phase 7).
 // ---------------------------------------------------------------------------
 model VerificationFlag {
   id        String  @id @default(cuid())
@@ -214,8 +214,16 @@ model VerificationFlag {
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   issueType String  @map("issue_type")
+  // Original issue description, written by the Phase 1 import script.
+  // Never overwritten by the admin — see resolutionNote below.
   note      String?
   resolved  Boolean @default(false)
+
+  // The admin's own note explaining how/why this was resolved, kept
+  // separate from the import-generated `note` above so the original
+  // issue description is never lost.
+  resolutionNote String?   @map("resolution_note")
+  resolvedAt     DateTime? @map("resolved_at")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -223,4 +231,41 @@ model VerificationFlag {
   @@index([productId])
   @@index([resolved])
   @@map("verification_flags")
+}
+
+// ---------------------------------------------------------------------------
+// AdminUser / AdminSession — Phase 7 admin authentication. Single admin
+// role only (no permissions/roles system) — see README "Phase 7
+// decisions" for why this is a real table rather than one hardcoded
+// env-var login. Passwords are bcrypt hashes, never plaintext.
+// ---------------------------------------------------------------------------
+model AdminUser {
+  id           String @id @default(cuid())
+  email        String @unique
+  passwordHash String @map("password_hash")
+
+  sessions AdminSession[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("admin_users")
+}
+
+// Sessions store a SHA-256 hash of the session token, never the token
+// itself — the raw token only ever exists in the httpOnly cookie and in
+// memory at login time, the same way passwordHash never stores the
+// plaintext password.
+model AdminSession {
+  id          String    @id @default(cuid())
+  adminUserId String    @map("admin_user_id")
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([adminUserId])
+  @@map("admin_sessions")
 }

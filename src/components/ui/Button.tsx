@@ -1,9 +1,5 @@
 import Link from "next/link";
-import type {
-  AnchorHTMLAttributes,
-  ButtonHTMLAttributes,
-  ReactNode,
-} from "react";
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost";
 export type ButtonSize = "sm" | "md";
@@ -84,8 +80,9 @@ export function Button(props: ButtonProps) {
     .join(" ");
 
   if ("href" in rest && rest.href) {
-    const { href, ...anchorProps } =
-      rest as AnchorHTMLAttributes<HTMLAnchorElement> & { href: string };
+    const { href, ...anchorProps } = rest as AnchorHTMLAttributes<HTMLAnchorElement> & {
+      href: string;
+    };
     return (
       <Link href={href} className={classes} {...anchorProps}>
         {children}
@@ -94,10 +91,7 @@ export function Button(props: ButtonProps) {
   }
 
   return (
-    <button
-      className={classes}
-      {...(rest as ButtonHTMLAttributes<HTMLButtonElement>)}
-    >
+    <button className={classes} {...(rest as ButtonHTMLAttributes<HTMLButtonElement>)}>
       {children}
     </button>
   );

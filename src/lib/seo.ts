@@ -54,9 +54,7 @@ export function buildMetadata({
       description,
       images: image ? [image] : undefined,
     },
-    robots: noIndex
-      ? { index: false, follow: false }
-      : { index: true, follow: true },
+    robots: noIndex ? { index: false, follow: false } : { index: true, follow: true },
   };
 }
 

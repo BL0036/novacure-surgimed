@@ -43,3 +43,6 @@ next-env.d.ts
 # local test fixtures / sample data — not committed
 data-test.csv
 *.local.csv
+
+# Phase 7 — locally uploaded product photos (real files, not fixtures)
+/public/uploads/

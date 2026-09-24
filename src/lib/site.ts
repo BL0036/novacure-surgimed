@@ -31,10 +31,7 @@ export const UTILITY_NAV: NavLink[] = [
   { label: "Size Guide", href: "/size-guide" },
 ];
 
-export const FOOTER_NAV: NavLink[] = [
-  ...PRIMARY_NAV,
-  ...UTILITY_NAV,
-];
+export const FOOTER_NAV: NavLink[] = [...PRIMARY_NAV, ...UTILITY_NAV];
 
 // The 11 Craftscare categories from the Phase 1 catalogue import.
 // Flat list, brand-scoped — matches the Category model, no invented copy.
@@ -57,10 +54,9 @@ import { slugify } from "./slugify";
 // Slug lookup for the Craftscare categories above, used by the
 // brand-namespaced (/craftscare/[category]) and cross-brand
 // (/categories/[category]) route params added in Phase 3 §3/§9.5.
-export const CRAFTSCARE_CATEGORY_SLUGS: Record<string, string> =
-  Object.fromEntries(
-    CRAFTSCARE_CATEGORIES.map((category) => [slugify(category), category]),
-  );
+export const CRAFTSCARE_CATEGORY_SLUGS: Record<string, string> = Object.fromEntries(
+  CRAFTSCARE_CATEGORIES.map((category) => [slugify(category), category]),
+);
 
 export function getCraftscareCategoryBySlug(slug: string): string | undefined {
   return CRAFTSCARE_CATEGORY_SLUGS[slug];
@@ -97,6 +93,4 @@ export interface BrandSummary {
 
 // Only Craftscare exists as of Phase 2. Adding a second brand later needs
 // a new Brand row + this array updated — no schema or route changes.
-export const BRANDS: BrandSummary[] = [
-  { name: "Craftscare", slug: "craftscare" },
-];
+export const BRANDS: BrandSummary[] = [{ name: "Craftscare", slug: "craftscare" }];

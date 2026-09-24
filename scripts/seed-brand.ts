@@ -37,12 +37,12 @@ async function main() {
   try {
     const existing = await client.query<{ id: string; name: string }>(
       `SELECT id, name FROM brands WHERE slug = $1`,
-      [slug]
+      [slug],
     );
 
     if (existing.rows.length > 0) {
       console.log(
-        `Brand "${existing.rows[0].name}" (${slug}) already exists — nothing to do.`
+        `Brand "${existing.rows[0].name}" (${slug}) already exists — nothing to do.`,
       );
       return;
     }
@@ -51,7 +51,7 @@ async function main() {
     await client.query(
       `INSERT INTO brands (id, name, slug, updated_at)
        VALUES ($1, $2, $3, now())`,
-      [id, name, slug]
+      [id, name, slug],
     );
 
     console.log(`Created brand "${name}" (${slug}).`);

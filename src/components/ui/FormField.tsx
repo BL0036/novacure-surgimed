@@ -51,13 +51,7 @@ export function Input({ invalid, className, ...rest }: InputProps) {
   const classes = [FIELD_BASE_CLASSES, fieldStateClasses(invalid), className ?? ""]
     .filter(Boolean)
     .join(" ");
-  return (
-    <input
-      className={classes}
-      aria-invalid={invalid || undefined}
-      {...rest}
-    />
-  );
+  return <input className={classes} aria-invalid={invalid || undefined} {...rest} />;
 }
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -73,13 +67,7 @@ export function Textarea({ invalid, className, ...rest }: TextareaProps) {
   ]
     .filter(Boolean)
     .join(" ");
-  return (
-    <textarea
-      className={classes}
-      aria-invalid={invalid || undefined}
-      {...rest}
-    />
-  );
+  return <textarea className={classes} aria-invalid={invalid || undefined} {...rest} />;
 }
 
 export function FieldError({ children }: { children: ReactNode }) {

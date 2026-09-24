@@ -1,10 +1,13 @@
-# NovaCure Surgimed Suppliers — Product Master Data (Phase 1)
+# NovaCure Surgimed Suppliers
 
 Multi-brand healthcare e-commerce platform. First brand: **Craftscare**
 (orthopaedic products, Nepal).
 
-**Phase 1 scope only:** product master data schema + CSV import. No
-storefront pages, no admin UI, no authentication yet.
+**Current scope (through Phase 7):** product master data + CSV import
+(Phase 1), storefront routes/IA/SEO (Phases 2–4), UI/UX design system
+(Phase 5), and admin auth + product management (Phase 7 — Phase 6 was a
+checkpoint, not a coding phase). No customer accounts, cart/checkout, or
+reporting yet.
 
 ## Stack
 
@@ -25,6 +28,7 @@ Create the database and apply the schema:
 ```bash
 createdb novacure_dev
 psql -d novacure_dev -f prisma/migrations/20260923112504_init/migration.sql
+psql -d novacure_dev -f prisma/migrations/20260924040000_phase7_admin/migration.sql
 ```
 
 ### About Prisma CLI (`generate` / `migrate dev`)
@@ -34,22 +38,34 @@ migrations should be generated from. In the sandbox this was built in,
 `npx prisma generate` / `migrate dev` could not run because the Prisma CLI
 needs to download engine binaries from `binaries.prisma.sh`, which wasn't
 reachable on that network. To get unblocked, the schema was applied by hand
-as a plain SQL migration (`prisma/migrations/20260923112504_init/migration.sql`,
-written to match `schema.prisma` exactly), and the import script talks to
-Postgres directly via `pg` instead of a generated `@prisma/client`.
+as plain SQL migrations (`prisma/migrations/20260923112504_init/migration.sql`,
+`prisma/migrations/20260924040000_phase7_admin/migration.sql` — each written
+to match `schema.prisma` exactly), and all app code talks to Postgres
+directly via `pg` instead of a generated `@prisma/client`.
 
 On a normal machine (or once `binaries.prisma.sh` is reachable), this
 should resolve itself:
 
 ```bash
-npx prisma generate                                    # generates @prisma/client
-npx prisma migrate resolve --applied 20260923112504_init  # tells Prisma this migration is already applied
-npx prisma migrate dev                                 # future schema changes from here on
+npx prisma generate                                          # generates @prisma/client
+npx prisma migrate resolve --applied 20260923112504_init     # tells Prisma this migration is already applied
+npx prisma migrate resolve --applied 20260924040000_phase7_admin
+npx prisma migrate dev                                       # future schema changes from here on
 ```
 
-After that, `scripts/import-products.ts` can be switched from raw `pg`
-queries to `@prisma/client` if you'd rather have the generated types —
-the query logic maps over directly, table for table.
+After that, the various `src/lib/**` query modules and `scripts/*.ts` can
+be switched from raw `pg` queries to `@prisma/client` if you'd rather have
+the generated types — the query logic maps over directly, table for table.
+
+## Admin
+
+```bash
+npm run db:seed-admin -- --email=you@example.com --password=changeme12
+```
+
+Then visit `/admin/login`. Sessions last 30 days (httpOnly cookie); log
+out clears it and deletes the session row. Run the seed script again with
+the same email to reset a forgotten local password.
 
 ## Running the import
 
@@ -68,11 +84,13 @@ npm run import:products -- --file=./path/to/your.csv [--brand-name="Craftscare"]
   alone so manual review work isn't undone by a re-import.
 
 Expected CSV columns (header row required, any order):
+
 ```
 product_name, raw_catalogue_name, category, manufacturer_ref_code,
 size_label, uom, hs_code, stockist_rate, retail_price, mrp,
 vat_status, status, notes
 ```
+
 One row = one `ProductVariant`. Rows sharing the same `product_name` are
 grouped into a single `Product`.
 
@@ -84,11 +102,109 @@ variants, 77 verification flags generated, confirmed idempotent on re-run.
 ```
 prisma/schema.prisma                              — data model (source of truth)
 prisma/migrations/20260923112504_init/migration.sql — hand-written SQL matching the schema
+prisma/migrations/20260924040000_phase7_admin/migration.sql — Phase 7 admin auth + flag resolution
 scripts/import-products.ts                        — CLI import script
+scripts/seed-admin.ts                             — create/reset an admin login
 src/lib/db.ts                                     — pg Pool helper
 src/lib/slugify.ts                                — slug helper
+src/lib/auth.ts                                   — password/session-token primitives (unit tested)
+src/lib/admin/                                     — admin data access + session handling
+src/lib/admin/actions/                             — admin Server Actions (forms post here)
 .env.example                                      — DATABASE_URL template
 ```
+
+## Phase 7 decisions made during implementation
+
+Database + admin — closing the two Phase 6 gaps, then building admin
+auth and product management. Flagging judgment calls for review against
+the Master Plan.
+
+**No decision came back on admin user count before this was sent**, so
+this defaults to a single admin (per the Phase 7 prompt's own fallback:
+"unless told otherwise"). It's implemented as a real `admin_users` table
+rather than one hardcoded env-var login, though — seeding a second admin
+later is one `npm run db:seed-admin` call, not a code change, so this
+default doesn't lock anything in.
+
+1. **Sessions are a real DB table (`admin_sessions`), not a signed JWT
+   cookie.** A JWT can't be revoked before it expires without extra
+   infrastructure (a blocklist); a DB-backed session can be deleted
+   immediately on logout and is simpler to reason about for a
+   single-admin tool at this scale. The cookie holds a random 32-byte
+   token; only its SHA-256 hash is stored, so a database read alone
+   can't be replayed as a valid session, the same reasoning as storing
+   a password hash instead of the password.
+
+2. **Passwords use `bcryptjs`, not `bcrypt`.** The native `bcrypt`
+   package needs a compiled binary; `bcryptjs` is a pure-JS
+   implementation of the same algorithm with no native build step,
+   which matters for portability across whatever machine/CI ends up
+   building this (this sandbox included).
+
+3. **`/admin` is a second, separate root layout, not nested inside the
+   customer site's layout.** Next.js only allows one `<html>`/`<body>`
+   pair per render tree, so giving admin its own meant moving every
+   existing customer-facing route into a `(site)` route group with its
+   own root layout, and giving `/admin` a sibling root layout with no
+   `SiteHeader`/`SiteFooter`/organization JSON-LD and a blanket
+   `noindex`. URLs are unchanged — `(site)` is a route group, not a URL
+   segment. `/admin` is also now explicitly disallowed in `robots.ts`
+   as a second layer, on top of the noindex meta tag and the fact that
+   nothing under it renders without a valid session anyway.
+
+4. **Route protection is a DB-backed check in a layout, not
+   `middleware.ts`.** Next.js Middleware runs on the Edge runtime by
+   default, and the `pg` driver this project uses throughout needs a
+   real TCP connection that Edge can't make. Rather than mixing in a
+   second database client just for Edge, `requireAdminSession()` runs
+   in `src/app/admin/(protected)/layout.tsx` — a Server Component,
+   Node.js runtime, same `pg` pool as everywhere else — and every route
+   nested under that one layout is covered by the single check. Server
+   Actions also call `requireAdminSession()` themselves, since an
+   action's server-side code path doesn't run through the page's
+   layout tree.
+
+5. **Verification flags gained a separate `resolutionNote` /
+   `resolvedAt`, rather than reusing the existing `note` column.** The
+   Phase 1 import script writes `note` as the issue description
+   (e.g. which rows had conflicting prices); letting the admin's
+   "mark resolved, add a note" flow overwrite that would destroy the
+   original context the flag exists to preserve.
+
+6. **`stockist_rate` is on the variant edit form, clearly labeled
+   internal-only, but never on the product list table** — per the
+   Master Plan's explicit instruction. The list table doesn't show any
+   per-variant price at all (retail included), since a product can have
+   several variants at different prices; only the edit form, scoped to
+   one variant at a time, is the right place for exact figures.
+
+7. **Product images are saved to local disk** (`public/uploads/products/
+   <id>/…`), not an object-storage bucket. Fine for one admin and a
+   ~80-product catalogue on a single deployment; worth revisiting if
+   this ever moves to a multi-instance host where the filesystem isn't
+   shared, or once photos actually need to be sourced at volume.
+
+8. **No bulk CSV re-import button in the admin**, matching the Master
+   Plan's own "nice-to-have, not necessary" note — `npm run
+   import:products` from the command line already does this and wasn't
+   worth re-building as a form-and-file-upload flow this phase.
+
+9. **No success/flash-message system.** Every mutation redirects back to
+   the page it came from, which is enough feedback (the new value is
+   just there) without building a toast/banner mechanism this phase.
+
+10. **Vitest is pinned to v2, not the latest v4/v5.** `npm install`
+    with the newest vitest hit a real bug in npm's dependency resolver
+    (`Cannot read properties of null (reading 'edgesOut')`) triggered by
+    vitest's optional peer dependencies, reproducible in this sandbox
+    even with `--legacy-peer-deps`. v2 installs cleanly and is more than
+    sufficient for the handful of pure-function tests this phase needed;
+    revisit the version once `npm install vitest@latest` works cleanly
+    in your environment.
+
+11. **Prettier's `printWidth` is 88, not the 80 default.** Matches the
+    line lengths already common across the Phase 1–5 codebase more
+    closely than either extreme (80 or the also-common 100).
 
 ## Schema decisions made during implementation
 
@@ -132,7 +248,7 @@ review against the Master Plan:
    strings in the sample data contain a `/` (e.g. "Back & Lumbar /
    Abdominal") — this reads as one category name, not a parent/child pair,
    so it's stored as a single `Category` row with `parent_category_id =
-   null`. The schema supports a real hierarchy (`parent_category_id`) for
+null`. The schema supports a real hierarchy (`parent_category_id`) for
    when/if the catalogue actually needs nested categories.
 
 6. **No `ProductImage` rows are created by the importer.** The CSV has no
@@ -171,7 +287,7 @@ Master Plan (Phase 4 skipped this section; resuming the Phase 1 pattern).
    so for now they're just available tokens + the `FieldError`/`invalid`
    states on the new form components.
 
-2. **`--brand-dark` is a *darker* blue in light mode but a *lighter* blue
+2. **`--brand-dark` is a _darker_ blue in light mode but a _lighter_ blue
    in dark mode.** A hover/active state needs to move away from the
    resting state in whichever direction stays visible — darkening further
    on an already-dark page would nearly disappear.

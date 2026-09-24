@@ -20,10 +20,7 @@ export function organizationJsonLd() {
 }
 
 export type ProductAvailability =
-  | "InStock"
-  | "OutOfStock"
-  | "Discontinued"
-  | "PreOrder";
+  "InStock" | "OutOfStock" | "Discontinued" | "PreOrder";
 
 interface ProductJsonLdInput {
   name: string;
