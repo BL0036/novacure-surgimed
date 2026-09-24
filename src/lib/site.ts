@@ -1,0 +1,64 @@
+// Site-wide constants for Phase 2 (brand + platform architecture).
+// Nav structure follows Master Plan §11; category list mirrors the 11
+// Craftscare categories already seeded via the Phase 1 CSV importer
+// (see prisma/schema.prisma — Category is scoped to brandId).
+
+export const SITE_NAME = "NovaCure";
+export const SITE_FULL_NAME = "NovaCure Surgimed Suppliers";
+
+export interface NavLink {
+  label: string;
+  href: string;
+}
+
+// Primary header nav. "Shop" and "Brands" are kept as separate items even
+// though they overlap while Craftscare is the only brand — see Phase 2
+// notes: once brand #2 exists, "Shop" becomes an all-brand view and
+// "Brands" becomes a brand picker, with no restructuring needed.
+export const PRIMARY_NAV: NavLink[] = [
+  { label: "Shop", href: "/shop" },
+  { label: "Brands", href: "/brands" },
+  { label: "Categories", href: "/categories" },
+  { label: "Guides", href: "/guides" },
+  { label: "For Hospitals & Pharmacies", href: "/for-hospitals-pharmacies" },
+  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
+];
+
+// Secondary / footer utility links (not yet functional — Phase 10).
+export const UTILITY_NAV: NavLink[] = [
+  { label: "Product Finder", href: "/product-finder" },
+  { label: "Size Guide", href: "/size-guide" },
+];
+
+export const FOOTER_NAV: NavLink[] = [
+  ...PRIMARY_NAV,
+  ...UTILITY_NAV,
+];
+
+// The 11 Craftscare categories from the Phase 1 catalogue import.
+// Flat list, brand-scoped — matches the Category model, no invented copy.
+export const CRAFTSCARE_CATEGORIES = [
+  "Cervical & Neck",
+  "Back & Lumbar/Abdominal",
+  "Shoulder & Arm",
+  "Elbow",
+  "Wrist & Hand",
+  "Knee",
+  "Ankle & Foot",
+  "Traction & Immobilization Equipment",
+  "Vascular",
+  "Chest",
+  "Consumables & Equipment",
+] as const;
+
+export interface BrandSummary {
+  name: string;
+  slug: string;
+}
+
+// Only Craftscare exists as of Phase 2. Adding a second brand later needs
+// a new Brand row + this array updated — no schema or route changes.
+export const BRANDS: BrandSummary[] = [
+  { name: "Craftscare", slug: "craftscare" },
+];
