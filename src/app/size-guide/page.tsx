@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import { ComingSoon } from "@/components/ComingSoon";
+import { buildMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Size Guide",
+  description: "General and per-product size guidance.",
+  path: "/size-guide",
+  noIndex: true,
+});
 
 export default function SizeGuidePage() {
   return (

@@ -52,6 +52,20 @@ export const CRAFTSCARE_CATEGORIES = [
   "Consumables & Equipment",
 ] as const;
 
+import { slugify } from "./slugify";
+
+// Slug lookup for the Craftscare categories above, used by the
+// brand-namespaced (/craftscare/[category]) and cross-brand
+// (/categories/[category]) route params added in Phase 3 §3/§9.5.
+export const CRAFTSCARE_CATEGORY_SLUGS: Record<string, string> =
+  Object.fromEntries(
+    CRAFTSCARE_CATEGORIES.map((category) => [slugify(category), category]),
+  );
+
+export function getCraftscareCategoryBySlug(slug: string): string | undefined {
+  return CRAFTSCARE_CATEGORY_SLUGS[slug];
+}
+
 export interface BrandSummary {
   name: string;
   slug: string;

@@ -1,5 +1,14 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { BRANDS } from "@/lib/site";
+import { buildMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Brands",
+  description:
+    "Brands carried on the NovaCure Surgimed Suppliers platform.",
+  path: "/brands",
+});
 
 export default function BrandsPage() {
   return (

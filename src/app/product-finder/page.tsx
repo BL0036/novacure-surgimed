@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import { ComingSoon } from "@/components/ComingSoon";
+import { buildMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Product Finder",
+  description: "Guided product-finder tool.",
+  path: "/product-finder",
+  noIndex: true,
+});
 
 export default function ProductFinderPage() {
   return (

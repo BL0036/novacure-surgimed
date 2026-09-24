@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import { ComingSoon } from "@/components/ComingSoon";
+import { buildMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildMetadata({
+  title: "About",
+  description: "About NovaCure Surgimed Suppliers.",
+  path: "/about",
+  noIndex: true,
+});
 
 export default function AboutPage() {
   return (

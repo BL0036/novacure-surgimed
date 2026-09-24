@@ -1,8 +1,27 @@
+import Link from "next/link";
+import type { Metadata } from "next";
 import { CRAFTSCARE_CATEGORIES } from "@/lib/site";
+import { slugify } from "@/lib/slugify";
+import { buildMetadata } from "@/lib/seo";
+import { JsonLd } from "@/components/JsonLd";
+import { breadcrumbJsonLd } from "@/lib/structured-data";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Craftscare",
+  description:
+    "Craftscare orthopaedic products, carried by NovaCure Surgimed Suppliers in Nepal.",
+  path: "/brands/craftscare",
+});
 
 export default function CraftscareBrandPage() {
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-20">
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Brands", path: "/brands" },
+          { name: "Craftscare", path: "/brands/craftscare" },
+        ])}
+      />
       <p className="text-sm font-medium text-brand">Brand</p>
       <h1 className="mt-2 text-2xl font-semibold tracking-tight">
         Craftscare
@@ -19,8 +38,13 @@ export default function CraftscareBrandPage() {
         </h2>
         <ul className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
           {CRAFTSCARE_CATEGORIES.map((category) => (
-            <li key={category} className="text-foreground">
-              {category}
+            <li key={category}>
+              <Link
+                href={`/craftscare/${slugify(category)}`}
+                className="text-foreground hover:text-brand hover:underline"
+              >
+                {category}
+              </Link>
             </li>
           ))}
         </ul>
