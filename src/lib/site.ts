@@ -66,6 +66,30 @@ export function getCraftscareCategoryBySlug(slug: string): string | undefined {
   return CRAFTSCARE_CATEGORY_SLUGS[slug];
 }
 
+// Product Finder Step 1 — body area → matching Craftscare category
+// (Phase 4 plan §4). Deliberately does not include Traction &
+// Immobilization Equipment, Vascular, or Consumables & Equipment: they
+// don't map to a single body area the way the others do, and are
+// reached via "browse all categories" instead.
+export interface BodyAreaOption {
+  label: string;
+  categorySlug: string;
+}
+
+export const PRODUCT_FINDER_BODY_AREAS: BodyAreaOption[] = [
+  { label: "Neck", categorySlug: slugify("Cervical & Neck") },
+  { label: "Back / Abdomen", categorySlug: slugify("Back & Lumbar/Abdominal") },
+  { label: "Shoulder / Arm", categorySlug: slugify("Shoulder & Arm") },
+  { label: "Elbow", categorySlug: slugify("Elbow") },
+  { label: "Wrist / Hand / Finger", categorySlug: slugify("Wrist & Hand") },
+  { label: "Knee", categorySlug: slugify("Knee") },
+  { label: "Ankle / Foot", categorySlug: slugify("Ankle & Foot") },
+  { label: "Chest", categorySlug: slugify("Chest") },
+];
+
+export const PRODUCT_FINDER_DISCLAIMER =
+  "This tool helps you find the right product category — it does not diagnose a medical condition. Consult a healthcare professional for medical advice.";
+
 export interface BrandSummary {
   name: string;
   slug: string;

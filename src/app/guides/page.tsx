@@ -10,11 +10,14 @@ export const metadata: Metadata = buildMetadata({
   noIndex: true,
 });
 
+// Phase 4 §6 — structure only, no Guide model exists yet in the schema
+// and no article content is written here. FAQPage schema (Phase 3) is
+// applied per-guide once real Q&A-formatted articles exist (Phase 9+).
 export default function GuidesPage() {
   return (
     <ComingSoon
-      title="Guides & Resources — coming soon"
-      note="Educational content and buying guides. Empty for now — populated in Phase 3."
+      title="Guides & Resources"
+      note="No guides published yet. Buying guides and educational content are written in a later phase."
     />
   );
 }

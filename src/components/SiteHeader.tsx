@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { PRIMARY_NAV, SITE_NAME } from "@/lib/site";
+import { SearchForm } from "@/components/SearchForm";
 
 export function SiteHeader() {
   return (
@@ -34,10 +35,12 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
+
+        <SearchForm className="hidden w-48 shrink-0 sm:block" />
       </div>
 
       {/* Mobile / narrow-viewport nav — same links, wraps below the logo row */}
-      <div className="mx-auto flex w-full max-w-6xl flex-wrap gap-x-5 gap-y-2 px-6 pb-4 text-sm lg:hidden">
+      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-5 gap-y-2 px-6 pb-4 text-sm lg:hidden">
         {PRIMARY_NAV.map((item) => (
           <Link
             key={item.href}
@@ -47,6 +50,9 @@ export function SiteHeader() {
             {item.label}
           </Link>
         ))}
+      </div>
+      <div className="mx-auto w-full max-w-6xl px-6 pb-4 sm:hidden">
+        <SearchForm />
       </div>
     </header>
   );
