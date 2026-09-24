@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { PRODUCT_FINDER_BODY_AREAS, PRODUCT_FINDER_DISCLAIMER } from "@/lib/site";
 import { buildMetadata } from "@/lib/seo";
+import { Button } from "@/components/ui/Button";
 
 export const metadata: Metadata = buildMetadata({
   title: "Product Finder",
@@ -19,31 +20,28 @@ export const metadata: Metadata = buildMetadata({
 export default function ProductFinderPage() {
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-20">
-      <h1 className="text-2xl font-semibold tracking-tight">
-        Product Finder
-      </h1>
+      <h1 className="text-page-title">Product Finder</h1>
 
       <p className="mt-4 rounded-md border border-border bg-brand-tint px-4 py-3 text-sm text-foreground">
         {PRODUCT_FINDER_DISCLAIMER}
       </p>
 
-      <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-muted">
-        Where is the product for?
-      </h2>
+      <h2 className="text-eyebrow mt-8">Where is the product for?</h2>
       <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
         {PRODUCT_FINDER_BODY_AREAS.map((area) => (
-          <Link
+          <Button
             key={area.categorySlug}
             href={`/craftscare/${area.categorySlug}`}
-            className="rounded-lg border border-border px-4 py-3 text-center text-sm font-medium text-foreground transition-colors hover:bg-brand-tint"
+            variant="secondary"
+            className="justify-center text-center"
           >
             {area.label}
-          </Link>
+          </Button>
         ))}
       </div>
 
       <div className="mt-10 border-t border-border pt-6">
-        <p className="text-sm text-muted">
+        <p className="text-body-muted">
           Looking for traction equipment, vascular products, or consumables
           &amp; equipment instead?
         </p>

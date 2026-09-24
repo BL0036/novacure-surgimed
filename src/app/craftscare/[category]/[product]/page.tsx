@@ -69,10 +69,10 @@ export default async function CraftscareProductPage({ params }: PageProps) {
           {category}
         </Link>
       </p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight">
+      <h1 className="text-page-title mt-2">
         Product page — content coming soon
       </h1>
-      <p className="mt-3 text-sm text-muted">
+      <p className="text-body-muted mt-3">
         Real product name, description, images, sizes, and pricing are
         populated here once the catalogue is published (Phase 8/9). No
         product copy is invented on this placeholder route.

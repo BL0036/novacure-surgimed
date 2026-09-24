@@ -7,6 +7,22 @@
   --border: #e5e7eb;
   --brand: #0029ba;
   --brand-tint: #eef2fe;
+  /* Phase 5 — hover/active state for brand-colored controls. Darker
+     than --brand in light mode (standard "press to darken" affordance). */
+  --brand-dark: #001f8f;
+
+  /* Phase 5 — status tokens. Muted/desaturated on purpose (Master Plan
+     "professional-trust feel, not a generic e-commerce look") rather
+     than saturated traffic-light colors. Each has a `-tint` background
+     for badges/alerts, matching the existing --brand/--brand-tint
+     pattern. All four pairs verified ≥4.5:1 (WCAG AA) against their
+     paired background — see Phase 5 decisions in README. */
+  --success: #15803d;
+  --success-tint: #f0fdf4;
+  --warning: #a16207;
+  --warning-tint: #fffbeb;
+  --danger: #b91c1c;
+  --danger-tint: #fef2f2;
 }
 
 @theme inline {
@@ -16,6 +32,13 @@
   --color-border: var(--border);
   --color-brand: var(--brand);
   --color-brand-tint: var(--brand-tint);
+  --color-brand-dark: var(--brand-dark);
+  --color-success: var(--success);
+  --color-success-tint: var(--success-tint);
+  --color-warning: var(--warning);
+  --color-warning-tint: var(--warning-tint);
+  --color-danger: var(--danger);
+  --color-danger-tint: var(--danger-tint);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -27,6 +50,16 @@
     --muted: #9aa3af;
     --border: #262626;
     --brand-tint: #0d142e;
+    /* Lighter than --brand (not darker) — on a dark page, hover states
+       need to brighten, not dim further, to stay perceptible. */
+    --brand-dark: #24399f;
+
+    --success: #4ade80;
+    --success-tint: #052e1a;
+    --warning: #fbbf24;
+    --warning-tint: #3a2a05;
+    --danger: #f87171;
+    --danger-tint: #3f1212;
   }
 }
 
@@ -34,4 +67,41 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Phase 5 — global focus-visible fallback. Individual interactive
+   components (Button, Input, filter/nav links) layer on their own
+   focus-visible ring for a closer-to-brand look, but every element
+   gets at least this visible outline so nothing is ever keyboard-
+   focusable without a visible indicator. */
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* Phase 5 — typography scale (Master Plan Phase 5 §2). Applied
+   consistently across all Phase 2-4 pages in place of the ad hoc
+   Tailwind strings each page previously repeated. See "Phase 5
+   decisions" in README for the small size unifications this caused
+   (e.g. eyebrow labels were text-xs in one place, text-sm in another —
+   now always text-xs). */
+@layer components {
+  .text-page-title {
+    @apply text-2xl font-semibold tracking-tight text-foreground sm:text-3xl;
+  }
+  .text-section-heading {
+    @apply text-lg font-semibold tracking-tight text-foreground;
+  }
+  .text-eyebrow {
+    @apply text-xs font-semibold uppercase tracking-wide text-muted;
+  }
+  .text-body {
+    @apply text-sm text-foreground;
+  }
+  .text-body-muted {
+    @apply text-sm text-muted;
+  }
+  .text-small-muted {
+    @apply text-xs text-muted;
+  }
 }

@@ -19,8 +19,8 @@ export const metadata: Metadata = buildMetadata({
 export default function SizeGuidePage() {
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-20">
-      <h1 className="text-2xl font-semibold tracking-tight">Size Guide</h1>
-      <p className="mt-3 text-sm text-muted">
+      <h1 className="text-page-title">Size Guide</h1>
+      <p className="text-body-muted mt-3">
         General sizing guidance by category. Measurement charts are added
         once confirmed with the manufacturer — none are invented here.
       </p>
@@ -31,15 +31,15 @@ export default function SizeGuidePage() {
           return (
             <div key={category} className="flex items-center justify-between py-4">
               <div>
-                <p className="font-medium text-foreground">{category}</p>
-                <p className="mt-1 text-sm text-muted">
+                <p className="text-body font-medium">{category}</p>
+                <p className="text-body-muted mt-1">
                   Measurement chart pending — will be added once confirmed
                   with the manufacturer.
                 </p>
               </div>
               <Link
                 href={`/craftscare/${slug}`}
-                className="shrink-0 text-sm text-brand hover:underline"
+                className="rounded-sm shrink-0 text-sm text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 View products →
               </Link>

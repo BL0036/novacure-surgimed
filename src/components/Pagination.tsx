@@ -29,7 +29,10 @@ export function Pagination({
       className="mt-8 flex items-center justify-between text-sm"
     >
       {page > 1 ? (
-        <Link href={hrefFor(page - 1)} className="text-brand hover:underline">
+        <Link
+          href={hrefFor(page - 1)}
+          className="rounded-sm text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
           ← Previous
         </Link>
       ) : (
@@ -41,7 +44,10 @@ export function Pagination({
       </span>
 
       {page < totalPages ? (
-        <Link href={hrefFor(page + 1)} className="text-brand hover:underline">
+        <Link
+          href={hrefFor(page + 1)}
+          className="rounded-sm text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
           Next →
         </Link>
       ) : (

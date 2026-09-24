@@ -1,3 +1,5 @@
+import { Label, Input } from "@/components/ui/FormField";
+
 interface SearchFormProps {
   className?: string;
   defaultValue?: string;
@@ -9,16 +11,16 @@ interface SearchFormProps {
 export function SearchForm({ className, defaultValue }: SearchFormProps) {
   return (
     <form action="/search" method="get" role="search" className={className}>
-      <label htmlFor="site-search" className="sr-only">
+      <Label htmlFor="site-search" srOnly>
         Search products
-      </label>
-      <input
+      </Label>
+      <Input
         id="site-search"
         type="search"
         name="q"
         defaultValue={defaultValue}
         placeholder="Search products…"
-        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted focus:border-brand focus:outline-none"
+        className="py-1.5"
       />
     </form>
   );

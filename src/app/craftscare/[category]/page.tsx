@@ -93,7 +93,7 @@ export default async function CraftscareCategoryPage({
   const basePath = `/craftscare/${slug}`;
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-20">
+    <div className="mx-auto w-full max-w-5xl px-6 py-20">
       <JsonLd
         data={breadcrumbJsonLd([
           { name: "Craftscare", path: "/brands/craftscare" },
@@ -105,9 +105,7 @@ export default async function CraftscareCategoryPage({
           Craftscare
         </Link>
       </p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight">
-        {category}
-      </h1>
+      <h1 className="text-page-title mt-2">{category}</h1>
 
       <CategoryFilterBar
         basePath={basePath}
@@ -117,11 +115,11 @@ export default async function CraftscareCategoryPage({
       />
 
       {listing.products.length === 0 ? (
-        <p className="mt-8 text-sm text-muted">
+        <p className="text-body-muted mt-8">
           No products published in this category yet.
         </p>
       ) : (
-        <div className="mt-6 space-y-3">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {listing.products.map((product) => (
             <ProductCard
               key={product.id}

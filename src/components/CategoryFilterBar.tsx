@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { buildQueryString } from "@/lib/query-string";
 import type { CategorySort } from "@/lib/catalog";
+import { Button } from "@/components/ui/Button";
 
 const SORT_OPTIONS: { value: CategorySort; label: string }[] = [
   { value: "name", label: "Name (A–Z)" },
@@ -19,67 +19,98 @@ interface CategoryFilterBarProps {
 // only — no "popularity" sort, since there's no order/sales data to
 // base one on. Size options come from getCategorySizeLabels() (real
 // ProductVariant data), never a hardcoded list.
-export function CategoryFilterBar({
+function FilterContent({
   basePath,
   sort,
   sizeLabel,
   availableSizes,
 }: CategoryFilterBarProps) {
   return (
-    <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-4 border-y border-border py-4 text-sm">
-      <div className="flex items-center gap-2">
+    <>
+      <div className="flex flex-wrap items-center gap-2">
         <span className="text-muted">Sort:</span>
         {SORT_OPTIONS.map((option) => (
-          <Link
+          <Button
             key={option.value}
             href={`${basePath}${buildQueryString({
               sort: option.value === "name" ? undefined : option.value,
               size: sizeLabel,
             })}`}
-            className={
-              sort === option.value
-                ? "rounded-md bg-brand px-2.5 py-1 font-medium text-white"
-                : "rounded-md px-2.5 py-1 text-foreground hover:bg-brand-tint"
-            }
+            variant="ghost"
+            size="sm"
+            active={sort === option.value}
           >
             {option.label}
-          </Link>
+          </Button>
         ))}
       </div>
 
       {availableSizes.length > 0 ? (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-muted">Size:</span>
-          <Link
+          <Button
             href={`${basePath}${buildQueryString({
               sort: sort === "name" ? undefined : sort,
             })}`}
-            className={
-              !sizeLabel
-                ? "rounded-md bg-brand px-2.5 py-1 font-medium text-white"
-                : "rounded-md px-2.5 py-1 text-foreground hover:bg-brand-tint"
-            }
+            variant="ghost"
+            size="sm"
+            active={!sizeLabel}
           >
             All
-          </Link>
+          </Button>
           {availableSizes.map((size) => (
-            <Link
+            <Button
               key={size}
               href={`${basePath}${buildQueryString({
                 sort: sort === "name" ? undefined : sort,
                 size,
               })}`}
-              className={
-                sizeLabel === size
-                  ? "rounded-md bg-brand px-2.5 py-1 font-medium text-white"
-                  : "rounded-md px-2.5 py-1 text-foreground hover:bg-brand-tint"
-              }
+              variant="ghost"
+              size="sm"
+              active={sizeLabel === size}
             >
               {size}
-            </Link>
+            </Button>
           ))}
         </div>
       ) : null}
-    </div>
+    </>
+  );
+}
+
+// Phase 5 §6 — mobile gets a real collapsed pattern (native <details>,
+// no client JS needed) instead of the bar just wrapping onto more
+// lines. Rendered twice (desktop inline vs. mobile accordion) rather
+// than toggled with one CSS breakpoint, because a <details> element's
+// open/closed state is controlled by the browser itself, independent of
+// display:contents — trying to force it "always open" at sm+ with CSS
+// alone is unreliable across browsers.
+export function CategoryFilterBar(props: CategoryFilterBarProps) {
+  return (
+    <>
+      <div className="mt-6 hidden flex-wrap items-center gap-x-8 gap-y-4 border-y border-border py-4 text-sm sm:flex">
+        <FilterContent {...props} />
+      </div>
+
+      <details className="group mt-6 border-y border-border text-sm sm:hidden">
+        <summary className="flex cursor-pointer items-center justify-between py-4 font-medium text-foreground marker:content-none [&::-webkit-details-marker]:hidden">
+          <span>Sort &amp; filter</span>
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </summary>
+        <div className="flex flex-col gap-4 pb-4">
+          <FilterContent {...props} />
+        </div>
+      </details>
+    </>
   );
 }

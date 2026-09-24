@@ -31,24 +31,24 @@ export default async function SearchPage({ searchParams }: PageProps) {
     : { results: [], total: 0, page: 1, pageSize: 20, totalPages: 1 };
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-20">
-      <h1 className="text-2xl font-semibold tracking-tight">Search</h1>
+    <div className="mx-auto w-full max-w-5xl px-6 py-20">
+      <h1 className="text-page-title">Search</h1>
       <SearchForm defaultValue={query} className="mt-4 max-w-sm" />
 
       {!query ? (
-        <p className="mt-6 text-sm text-muted">
+        <p className="text-body-muted mt-6">
           Enter a product name, catalogue reference, or category to search.
         </p>
       ) : (
         <>
-          <p className="mt-6 text-sm text-muted">
+          <p className="text-body-muted mt-6">
             {result.total === 0
               ? `No results for "${query}".`
               : `${result.total} result${result.total === 1 ? "" : "s"} for "${query}"`}
           </p>
 
           {result.results.length > 0 ? (
-            <div className="mt-6 space-y-3">
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {result.results.map((product) => (
                 <ProductCard
                   key={product.id}

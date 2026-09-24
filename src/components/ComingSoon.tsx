@@ -12,10 +12,8 @@ interface ComingSoonProps {
 export function ComingSoon({ title, note, children }: ComingSoonProps) {
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-20">
-      <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-        {title}
-      </h1>
-      <p className="mt-3 text-sm text-muted">{note}</p>
+      <h1 className="text-page-title">{title}</h1>
+      <p className="text-body-muted mt-3">{note}</p>
       {children ? <div className="mt-8">{children}</div> : null}
     </div>
   );

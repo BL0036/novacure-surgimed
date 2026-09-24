@@ -1,39 +1,31 @@
 import Link from "next/link";
 import { BRANDS, SITE_FULL_NAME } from "@/lib/site";
+import { Button } from "@/components/ui/Button";
 
 // Phase 2 placeholder home page — structure and nav only, no invented
-// marketing copy. Real homepage content/design is Phase 5+.
+// marketing copy. Real homepage content is still later phases; Phase 5
+// only applies the shared typography scale and Button component.
 export default function Home() {
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-20">
       <p className="text-sm font-medium text-brand">{SITE_FULL_NAME}</p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight">
-        Home — content coming soon
-      </h1>
-      <p className="mt-3 text-sm text-muted">
+      <h1 className="text-page-title mt-2">Home — content coming soon</h1>
+      <p className="text-body-muted mt-3">
         This is a Phase 2 placeholder. Final homepage design and content are
         built in later phases.
       </p>
 
-      <div className="mt-8 flex flex-wrap gap-3 text-sm">
-        <Link
-          href="/shop"
-          className="rounded-md bg-brand px-4 py-2 font-medium text-white transition-opacity hover:opacity-90"
-        >
+      <div className="mt-8 flex flex-wrap gap-3">
+        <Button href="/shop" variant="primary">
           Browse Shop
-        </Link>
-        <Link
-          href="/brands"
-          className="rounded-md border border-border px-4 py-2 font-medium text-foreground transition-colors hover:bg-brand-tint"
-        >
+        </Button>
+        <Button href="/brands" variant="secondary">
           View Brands
-        </Link>
+        </Button>
       </div>
 
       <div className="mt-10 border-t border-border pt-6">
-        <p className="text-xs uppercase tracking-wide text-muted">
-          Brands currently carried
-        </p>
+        <p className="text-eyebrow">Brands currently carried</p>
         <ul className="mt-2 text-sm">
           {BRANDS.map((brand) => (
             <li key={brand.slug}>

@@ -153,3 +153,81 @@ review against the Master Plan:
    nothing yet to enforce this against — flagging as a reminder for
    Phase 2: any public-facing query/endpoint must explicitly exclude
    `stockist_rate` rather than `select *`.
+
+## Phase 5 decisions made during implementation
+
+UI/UX design system — visual polish and reusable components only, no new
+content, pages, or routes. Flagging judgment calls for review against the
+Master Plan (Phase 4 skipped this section; resuming the Phase 1 pattern).
+
+1. **Status tokens (`--success`/`--warning`/`--danger`) are deliberately
+   muted, not the usual bright green/amber/red.** Picked shades that read
+   as "professional/clinical" rather than "generic storefront" (matching
+   `--brand`'s existing restrained navy), and verified every text/background
+   pairing — including each color against its own `-tint` background —
+   at ≥4.5:1 contrast (WCAG AA), in both light and dark mode. None of
+   these are wired into any page yet; there's no order status, stock
+   status, or form validation flow to attach them to until later phases,
+   so for now they're just available tokens + the `FieldError`/`invalid`
+   states on the new form components.
+
+2. **`--brand-dark` is a *darker* blue in light mode but a *lighter* blue
+   in dark mode.** A hover/active state needs to move away from the
+   resting state in whichever direction stays visible — darkening further
+   on an already-dark page would nearly disappear.
+
+3. **A typography scale unified a few small inconsistencies that had
+   crept in across Phases 2–4** rather than preserving them as separate
+   cases: the "eyebrow" label style existed as both `text-xs` (ProductCard)
+   and `text-sm` (brand/product-finder page headings) uppercase text —
+   now always `text-xs` via `.text-eyebrow`. Page `<h1>`s now also step up
+   to `text-3xl` at `sm:` and up, which none of them did before (they were
+   flat `text-2xl` at every width).
+
+4. **Button component covers both real CTAs and the sort/size filter
+   chips**, via a third `active` prop rather than a fourth "toggle"
+   variant — `CategoryFilterBar`'s selected/unselected chip states were
+   already visually identical to `primary`/`ghost`, so this reuses the
+   same three variants instead of inventing a new one for one component.
+
+5. **Mobile nav breakpoint stays at `lg` (matches Phase 2's existing
+   `hidden lg:flex` cutoff)** rather than introducing a new breakpoint.
+   One side effect: the inline search box that used to show at `sm:`–`lg:`
+   widths (nav hidden, search visible) is gone — below `lg` now, search
+   only lives inside the hamburger panel, alongside the nav links. This
+   simplifies what was a slightly awkward in-between tablet state (visible
+   search, no visible nav) into two clean states: full desktop bar, or
+   hamburger panel with everything in it.
+
+6. **`CategoryFilterBar`'s mobile accordion is rendered as separate
+   markup from the desktop bar (shown/hidden via `hidden sm:flex` /
+   `sm:hidden`), not one `<details>` toggled with CSS.** A native
+   `<details open>` state is controlled by the browser, not by
+   `display: contents` — trying to force it "always open" at `sm:` and up
+   with CSS alone is inconsistent across browsers, so the safer choice
+   was two small render paths sharing one `FilterContent` helper.
+
+7. **ProductCard's image block is a permanent placeholder, not a
+   conditional one.** No product has a real photo yet anywhere in the
+   catalogue (Phase 1 decision #6 — the importer never created any
+   `ProductImage` rows), so "placeholder for missing photos" is currently
+   every card, every time. The block reserves a real `aspect-[4/3]` box
+   so swapping in a real `<Image>` later won't reflow the grid.
+
+8. **Search and category-listing pages widened from `max-w-3xl` to
+   `max-w-5xl`.** These are the two pages that render `ProductCard` in a
+   grid (`sm:grid-cols-2 lg:grid-cols-3`); the old 3xl content width was
+   sized for a single-column list of placeholder text and made a 3-column
+   card grid feel cramped. Every other page (still single-column text/links)
+   keeps `max-w-3xl`.
+
+9. **Form input/label/error components exist but aren't wired into any
+   flow.** No form on the site functionally submits anything yet — that's
+   Phase 11. `SearchForm` was refactored to use the new `Input`/`Label`
+   primitives (it's the one real `<input>` that already existed), which
+   also doubles as a working example for Phase 11 to follow.
+
+10. **`MobileNav` is the only Client Component this phase adds.**
+    Everything else in the app is still a Server Component; the hamburger
+    open/closed state is the one piece of UI that genuinely can't be
+    server-rendered.

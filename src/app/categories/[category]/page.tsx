@@ -53,10 +53,8 @@ export default async function CategoryAggregatePage({ params }: PageProps) {
           Categories
         </Link>
       </p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight">
-        {category}
-      </h1>
-      <p className="mt-3 text-sm text-muted">
+      <h1 className="text-page-title mt-2">{category}</h1>
+      <p className="text-body-muted mt-3">
         Currently sourced from Craftscare only.{" "}
         <Link
           href={`/craftscare/${slug}`}

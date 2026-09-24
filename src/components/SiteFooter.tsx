@@ -10,7 +10,7 @@ export function SiteFooter() {
             <Link
               key={item.href}
               href={item.href}
-              className="text-muted transition-colors hover:text-foreground"
+              className="rounded-sm text-muted transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               {item.label}
             </Link>
@@ -19,11 +19,11 @@ export function SiteFooter() {
 
         {/* Contact details are placeholders — real values come from the
             project owner before Phase 8 (see Phase 2 plan §4). */}
-        <div className="mt-6 text-sm text-muted">
+        <div className="text-body-muted mt-6">
           <p>Contact details coming soon.</p>
         </div>
 
-        <p className="mt-6 text-xs text-muted">
+        <p className="text-small-muted mt-6">
           © {new Date().getFullYear()} {SITE_FULL_NAME}.
         </p>
       </div>
