@@ -9,7 +9,7 @@ import { breadcrumbJsonLd } from "@/lib/structured-data";
 export const metadata: Metadata = buildMetadata({
   title: "Craftscare",
   description:
-    "Craftscare orthopaedic products, carried by NovaCure Surgimed Suppliers in Nepal.",
+    "Craftscare orthopaedic products, carried by NovaCure SurgiMed Suppliers in Nepal.",
   path: "/brands/craftscare",
 });
 
@@ -24,9 +24,14 @@ export default function CraftscareBrandPage() {
       />
       <p className="text-sm font-medium text-brand">Brand</p>
       <h1 className="text-page-title mt-2">Craftscare</h1>
-      <p className="text-body-muted mt-3">
-        Brand story coming soon — this page will carry the About Craftscare content once
-        it&rsquo;s written (see Phase 2 plan §4). It is not invented here.
+      <p className="text-body-muted mt-3 max-w-2xl">
+        Craft&rsquo;s Care is an established Indian orthopaedic and rehabilitation
+        brand, manufactured by Ortho Rehabilitation Aid. The range covers cervical,
+        back and lumbar, abdominal, wrist and elbow, and ankle orthoses, along with
+        traction appliances, neoprene supports, and walking aids. Craft&rsquo;s Care
+        products are manufactured under ISO 9001:2008, ISO 9001:2015, WHO-GMP, CE,
+        MSME, and FDA compliance standards, and are distributed in Nepal by
+        NovaCure SurgiMed.
       </p>
 
       <div className="mt-10 border-t border-border pt-6">

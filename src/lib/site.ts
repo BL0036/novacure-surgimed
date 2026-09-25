@@ -3,8 +3,36 @@
 // Craftscare categories already seeded via the Phase 1 CSV importer
 // (see prisma/schema.prisma — Category is scoped to brandId).
 
-export const SITE_NAME = "NovaCure";
-export const SITE_FULL_NAME = "NovaCure Surgimed Suppliers";
+export const SITE_NAME = "NovaCure SurgiMed";
+export const SITE_FULL_NAME = "NovaCure SurgiMed Suppliers";
+
+// Phase 8 content pass — real contact details from the project owner,
+// replacing the Phase 2/8 placeholders. Used by SiteFooter, the Contact
+// page, and the homepage Contact/WhatsApp section so there's one source
+// of truth instead of the same details typed three times.
+export const CONTACT_ADDRESS = "Mahalaxmi-4, Lalitpur, Mahalaxmi 44705, Nepal";
+export const CONTACT_PHONE_DISPLAY = "+977-9803261913";
+export const CONTACT_PHONE_TEL = "+9779803261913";
+export const CONTACT_WHATSAPP_URL = "https://wa.me/9779803261913";
+export const CONTACT_EMAIL = "novacuresurgimed@gmail.com";
+export const CONTACT_HOURS = [
+  { days: "Sunday – Friday", hours: "10:00 AM – 6:00 PM" },
+  { days: "Saturday", hours: "Closed" },
+];
+
+// Phase 8 content pass §6 — certifications belong to the Craftscare
+// manufacturer, not to NovaCure SurgiMed as the platform operator. Every
+// place these are displayed must say "Craftscare products are
+// manufactured under ..." (or equivalent) rather than implying NovaCure
+// itself holds them — see the homepage Trust section for the wording.
+export const CRAFTSCARE_CERTIFICATIONS = [
+  "ISO 9001:2008",
+  "ISO 9001:2015",
+  "WHO-GMP",
+  "CE",
+  "MSME",
+  "FDA",
+];
 
 export interface NavLink {
   label: string;

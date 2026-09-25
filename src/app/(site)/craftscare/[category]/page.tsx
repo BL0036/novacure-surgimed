@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return buildMetadata({
     title: `${category} | Craftscare`,
-    description: `${category} products from Craftscare, carried by NovaCure Surgimed Suppliers in Nepal.`,
+    description: `${category} products from Craftscare, carried by NovaCure SurgiMed Suppliers in Nepal.`,
     path: `/craftscare/${slug}`,
   });
 }

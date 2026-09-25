@@ -13,7 +13,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const { q } = await searchParams;
   return buildMetadata({
     title: q ? `Search: ${q}` : "Search",
-    description: "Search NovaCure Surgimed Suppliers' product catalogue.",
+    description: "Search NovaCure SurgiMed Suppliers' product catalogue.",
     path: "/search",
     noIndex: true, // search results pages aren't indexed
   });

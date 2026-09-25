@@ -5,7 +5,7 @@ import { buildMetadata } from "@/lib/seo";
 export const metadata: Metadata = buildMetadata({
   title: "Guides & Resources",
   description:
-    "Buying guides and educational content from NovaCure Surgimed Suppliers.",
+    "Buying guides and educational content from NovaCure SurgiMed Suppliers.",
   path: "/guides",
   noIndex: true,
 });

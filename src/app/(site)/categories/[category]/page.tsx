@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return buildMetadata({
     title: `${category} — Categories`,
-    description: `${category} products across all brands carried by NovaCure Surgimed Suppliers.`,
+    description: `${category} products across all brands carried by NovaCure SurgiMed Suppliers.`,
     path: `/categories/${slug}`,
     noIndex: true, // placeholder — remove once real listings exist (Phase 8/9)
   });

@@ -236,11 +236,233 @@ export async function searchProducts(query: string, page = 1): Promise<SearchRes
   }
 }
 
-/** Formats a decimal-string price (or null) as NPR display text.
- *  Never invents a number — a missing price shows as "Price on request". */
-export function formatPrice(minPrice: string | null): string {
-  if (minPrice === null) return "Price on request";
-  const value = Number(minPrice);
-  if (Number.isNaN(value)) return "Price on request";
-  return `Rs. ${value.toLocaleString("en-IN")}`;
+export interface ProductVariantSummary {
+  id: string;
+  sizeLabel: string;
+  sku: string;
+  uom: string;
+  /** Never stockistRate — that's internal-only, see schema.prisma comment. */
+  retailPrice: string | null;
+  mrp: string;
+  stockStatus: "in_stock" | "out_of_stock" | "discontinued" | "unknown";
 }
+
+export interface ProductImageSummary {
+  id: string;
+  type: "primary" | "secondary" | "detail" | "packaging" | "size_guide";
+  webPath: string;
+  altText: string | null;
+}
+
+export interface ProductDetail {
+  id: string;
+  name: string;
+  slug: string;
+  shortDescription: string | null;
+  fullDescription: string | null;
+  features: string | null;
+  /** ProductStatus, not PublicationStatus — used to gate Product JSON-LD
+   *  (Phase 8 §5): only "published" status gets structured data, even
+   *  though this query already only returns publication_status =
+   *  'published' rows (the two fields are set independently by the admin —
+   *  see README "Phase 7 decisions"). */
+  status: "draft" | "needs_verification" | "verified" | "published";
+  categoryId: string;
+  categoryName: string;
+  categorySlug: string;
+  brandName: string;
+  brandSlug: string;
+  variants: ProductVariantSummary[];
+  images: ProductImageSummary[];
+}
+
+/** Full product detail for the public product page, scoped to a brand +
+ *  category slug (so /craftscare/knee/foo 404s if "foo" isn't actually in
+ *  "knee" even though the slug itself is globally unique). Only returns
+ *  publication_status = 'published' products — draft/verification-pending
+ *  products are never reachable on the public site. Never selects
+ *  stockist_rate (internal cost price — see schema.prisma comment). */
+export async function getProductBySlug(
+  brandSlug: string,
+  categorySlug: string,
+  productSlug: string,
+): Promise<ProductDetail | null> {
+  try {
+    const pool = getPool();
+
+    const productRes = await pool.query<{
+      id: string;
+      name: string;
+      slug: string;
+      short_description: string | null;
+      full_description: string | null;
+      features: string | null;
+      status: ProductDetail["status"];
+      category_id: string;
+      category_name: string;
+      category_slug: string;
+      brand_name: string;
+      brand_slug: string;
+    }>(
+      `SELECT p.id, p.name, p.slug, p.short_description, p.full_description, p.features,
+              p.status, c.id AS category_id, c.name AS category_name, c.slug AS category_slug,
+              b.name AS brand_name, b.slug AS brand_slug
+       FROM products p
+       JOIN categories c ON c.id = p.category_id
+       JOIN brands b ON b.id = p.brand_id
+       WHERE b.slug = $1 AND c.slug = $2 AND p.slug = $3 AND p.publication_status = 'published'`,
+      [brandSlug, categorySlug, productSlug],
+    );
+    const product = productRes.rows[0];
+    if (!product) return null;
+
+    const [variantsRes, imagesRes] = await Promise.all([
+      pool.query<{
+        id: string;
+        size_label: string;
+        sku: string;
+        uom: string;
+        retail_price: string | null;
+        mrp: string;
+        stock_status: ProductVariantSummary["stockStatus"];
+      }>(
+        `SELECT id, size_label, sku, uom, retail_price, mrp, stock_status
+         FROM product_variants WHERE product_id = $1 ORDER BY size_label ASC`,
+        [product.id],
+      ),
+      pool.query<{
+        id: string;
+        type: ProductImageSummary["type"];
+        web_path: string | null;
+        alt_text: string | null;
+      }>(
+        `SELECT id, type, web_path, alt_text
+         FROM product_images
+         WHERE product_id = $1 AND image_status = 'available' AND web_path IS NOT NULL
+         ORDER BY type ASC`,
+        [product.id],
+      ),
+    ]);
+
+    return {
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      shortDescription: product.short_description,
+      fullDescription: product.full_description,
+      features: product.features,
+      status: product.status,
+      categoryId: product.category_id,
+      categoryName: product.category_name,
+      categorySlug: product.category_slug,
+      brandName: product.brand_name,
+      brandSlug: product.brand_slug,
+      variants: variantsRes.rows.map((r) => ({
+        id: r.id,
+        sizeLabel: r.size_label,
+        sku: r.sku,
+        uom: r.uom,
+        retailPrice: r.retail_price,
+        mrp: r.mrp,
+        stockStatus: r.stock_status,
+      })),
+      images: imagesRes.rows
+        .filter((r): r is typeof r & { web_path: string } => Boolean(r.web_path))
+        .map((r) => ({
+          id: r.id,
+          type: r.type,
+          webPath: r.web_path,
+          altText: r.alt_text,
+        })),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** 2-3 other published products in the same category, for the product
+ *  page's "related products" rail (Phase 8 §3). */
+export async function getRelatedProducts(
+  categoryId: string,
+  excludeProductId: string,
+  limit = 3,
+): Promise<CatalogProductSummary[]> {
+  try {
+    const pool = getPool();
+    const res = await pool.query<{
+      id: string;
+      name: string;
+      slug: string;
+      short_description: string | null;
+      min_price: string | null;
+    }>(
+      `SELECT p.id, p.name, p.slug, p.short_description,
+              (SELECT MIN(v.retail_price) FROM product_variants v WHERE v.product_id = p.id) AS min_price
+       FROM products p
+       WHERE p.category_id = $1 AND p.id != $2 AND p.publication_status = 'published'
+       ORDER BY p.updated_at DESC
+       LIMIT $3`,
+      [categoryId, excludeProductId, limit],
+    );
+    return res.rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      slug: r.slug,
+      shortDescription: r.short_description,
+      minPrice: r.min_price,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export interface FeaturedProduct extends CatalogProductSummary {
+  categorySlug: string;
+}
+
+/** Homepage "Featured/Popular products" section (Phase 8 §2, items 3 & 6).
+ *  There's no "featured" flag and no order/sales data to base "popular"
+ *  on, so both sections use this same honest default: the most recently
+ *  updated published products, brand-wide. See README "Phase 8 decisions"
+ *  for why this became one section instead of two. */
+export async function getFeaturedProducts(
+  brandSlug: string,
+  limit = 8,
+): Promise<FeaturedProduct[]> {
+  try {
+    const pool = getPool();
+    const res = await pool.query<{
+      id: string;
+      name: string;
+      slug: string;
+      short_description: string | null;
+      category_slug: string;
+      min_price: string | null;
+    }>(
+      `SELECT p.id, p.name, p.slug, p.short_description, c.slug AS category_slug,
+              (SELECT MIN(v.retail_price) FROM product_variants v WHERE v.product_id = p.id) AS min_price
+       FROM products p
+       JOIN categories c ON c.id = p.category_id
+       JOIN brands b ON b.id = p.brand_id
+       WHERE b.slug = $1 AND p.publication_status = 'published'
+       ORDER BY p.updated_at DESC
+       LIMIT $2`,
+      [brandSlug, limit],
+    );
+    return res.rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      slug: r.slug,
+      shortDescription: r.short_description,
+      categorySlug: r.category_slug,
+      minPrice: r.min_price,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+// Re-exported from ./format (not defined here) so Client Components can
+// import formatPrice without pulling in this file's `pg`/getPool() import
+// chain — see format.ts for why.
+export { formatPrice } from "./format";

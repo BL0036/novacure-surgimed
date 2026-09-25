@@ -3,10 +3,12 @@
 Multi-brand healthcare e-commerce platform. First brand: **Craftscare**
 (orthopaedic products, Nepal).
 
-**Current scope (through Phase 7):** product master data + CSV import
+**Current scope (through Phase 8):** product master data + CSV import
 (Phase 1), storefront routes/IA/SEO (Phases 2–4), UI/UX design system
-(Phase 5), and admin auth + product management (Phase 7 — Phase 6 was a
-checkpoint, not a coding phase). No customer accounts, cart/checkout, or
+(Phase 5), admin auth + product management (Phase 7 — Phase 6 was a
+checkpoint, not a coding phase), and the real storefront — homepage,
+category/product pages, image uploads via Vercel Blob (Phase 8). No
+customer accounts, cart/checkout, verified product copy/photos, or
 reporting yet.
 
 ## Stack
@@ -347,3 +349,118 @@ Master Plan (Phase 4 skipped this section; resuming the Phase 1 pattern).
     Everything else in the app is still a Server Component; the hamburger
     open/closed state is the one piece of UI that genuinely can't be
     server-rendered.
+
+## Phase 8 decisions made during implementation
+
+Storefront — real homepage, listing/product pages, and the carried-forward
+image storage fix. Flagging judgment calls for review against the Master
+Plan.
+
+1. **Image storage moved to Vercel Blob, not Cloudinary or S3.** Per the
+   Phase 7 review's recommendation and Master Plan §18 (deploying on
+   Vercel) — no separate account/service needed, and it drops straight
+   into `saveProductImage`/`deleteProductImage` without a new SDK
+   dependency graph. `ProductImage.webPath` now stores the full Blob URL
+   instead of a local `/uploads/...` path; no data migration was needed
+   since no real product photos existed yet (Phase 1 decision #6). Needs
+   a `BLOB_READ_WRITE_TOKEN` in `.env` for local dev — see `.env.example`.
+
+2. **`formatPrice` (and the `ProductVariantSummary`/image types it works
+   with) got split out of `src/lib/catalog.ts` into a new
+   `src/lib/format.ts`.** `VariantSelector` is a Client Component and
+   needs `formatPrice`, but `catalog.ts` imports `./db`, which pulls in
+   the `pg` package — `pg` uses Node builtins (`net`, `tls`) that don't
+   exist in the browser bundle, so importing anything from `catalog.ts`
+   from a Client Component fails the build. `catalog.ts` re-exports
+   `formatPrice` from `format.ts` so existing Server Component callers
+   (`ProductCard`, category/search pages) are unaffected.
+
+3. **Featured and Popular merged into one homepage section** (Master Plan
+   §16 items 3 & 6), per the Phase 8 plan's own recommendation — there's
+   no `featured` flag and no order/sales data to meaningfully distinguish
+   the two, so both would otherwise show identical "most recently updated
+   published products" content under two different headings. A real
+   featured-products admin toggle can be added later if manual curation
+   is wanted; not built now.
+
+4. **`getFeaturedProducts`/`getRelatedProducts` are brand/category-wide
+   "recently updated" queries, explicitly documented as an honest
+   placeholder for real curation/popularity signal**, matching the same
+   pattern already used by `listCategoryProducts`'s sort options (no
+   "popularity" sort exists there either, for the same reason).
+
+5. **Product JSON-LD is gated on `Product.status === "published"`, not
+   `publication_status === "published"`.** These are two independent
+   admin-settable fields (see Phase 7 `updateProductAction`) — a product
+   can be publicly visible (`publication_status = published`) while its
+   own verification `status` is still `verified` or earlier. Per Phase 8
+   §5, structured data only goes out once `status` itself reads
+   `published`, so `getProductBySlug` selects and returns `status`
+   specifically for the page to check, separately from the
+   `publication_status` filter already applied in the query's `WHERE`.
+
+6. **Product detail page's size/variant selector is display-only, not a
+   cart control.** There's no ordering system yet (Phase 11), so
+   `VariantSelector` is a small Client Component that swaps which
+   variant's price/SKU/stock status is shown — nothing is submitted or
+   added to anything.
+
+7. **`ProductGallery` always renders the placeholder block for now.** No
+   product has a real photo yet anywhere in the catalogue (same Phase 1
+   decision #6 noted in the Phase 5 section below), so the "no images"
+   path is the only path currently exercised. The component is written
+   to also handle a real multi-image gallery (main image + thumbnail
+   strip) so no changes are needed here once Phase 9 uploads real photos
+   — only `next.config.ts`'s new Blob `remotePatterns` entry (added this
+   phase) needed to exist ahead of time for `next/image` to accept the
+   URLs.
+
+8. **Certification badges: still not published, per Phase 5 §4 / Master
+   Plan §26.** The homepage's "Trust/information" section ships generic
+   copy ("quality-focused sourcing") only — no ISO/WHO-GMP/CE/MSME/FDA
+   marks — with a `TODO(owner)` comment marking where they go once
+   confirmed. This isn't new; it's the same hold from Phase 5, still
+   open.
+
+9. **Hero tagline, Craftscare brand blurb, and contact/WhatsApp details
+   are all placeholder text with `TODO(owner)` comments**, per Phase 8
+   §5/§6 — none of this content is invented. The footer already carried
+   a "Contact details coming soon" placeholder from Phase 2 and needed no
+   change this phase.
+
+## Phase 8 content update
+
+Replaced Phase 8's placeholder/TODO copy with real content from the
+project owner, across two passes. Content-only — no component logic,
+queries, routing, or styling structure changed.
+
+1. **`SITE_NAME`** -> `"NovaCure SurgiMed"`, **`SITE_FULL_NAME`** ->
+   `"NovaCure SurgiMed Suppliers"` (`src/lib/site.ts`) -- confirmed
+   correct by the project owner. Also swept the remaining hardcoded
+   `"NovaCure Surgimed Suppliers"` (old casing) occurrences in page
+   metadata descriptions (search, categories, brands, shop, guides,
+   for-hospitals-pharmacies, admin layout, and the (site) root layout's
+   default description) to match, since those were literal strings, not
+   reads of the `SITE_FULL_NAME` constant, and had been missed by the
+   rename.
+2. **Contact details** -- added as named constants in `src/lib/site.ts`
+   (`CONTACT_ADDRESS`, `CONTACT_PHONE_DISPLAY`/`CONTACT_PHONE_TEL`,
+   `CONTACT_WHATSAPP_URL`, `CONTACT_EMAIL`, `CONTACT_HOURS`) rather than
+   typed inline in three places, so footer, `/contact`, and the homepage
+   Contact/WhatsApp section stay in sync. `/contact` was a `ComingSoon`
+   placeholder (built before Phase 8) -- replaced with a real page.
+3. **Homepage hero** -- real tagline/subtext in place of the TODO.
+4. **Homepage Trust/certification section** -- enabled with the six
+   certifications as plain badges, worded "Craftscare products are
+   manufactured under ..." per the explicit instruction that these
+   belong to the Craftscare manufacturer, not to NovaCure SurgiMed as
+   platform operator -- not phrased as NovaCure holding them.
+5. **About NovaCure** -- real paragraph now in on `/about` and a new
+   homepage "About us" section (placed right after Hero -- Master Plan
+   §16 doesn't define a homepage About section's position, so this
+   slots in as the natural next block before the category grid). The
+   founder credit line ("Founded by Deepmala Lamichhane.") is on
+   `/about` only, per the request -- not duplicated onto the homepage.
+6. **Craftscare brand blurb** -- real paragraph now in on
+   `/brands/craftscare` and the homepage's existing Craftscare
+   brand-intro section, replacing both TODOs.

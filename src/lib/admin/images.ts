@@ -1,13 +1,10 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { mkdir, writeFile, unlink } from "node:fs/promises";
-import path from "node:path";
+import { put, del } from "@vercel/blob";
 import { getPool } from "@/lib/db";
 
 export type ProductImageType =
   "primary" | "secondary" | "detail" | "packaging" | "size_guide";
-
-const UPLOAD_ROOT = path.join(process.cwd(), "public", "uploads", "products");
 
 export interface AdminProductImage {
   id: string;
@@ -43,10 +40,15 @@ export async function listProductImages(
     }));
 }
 
-/** Saves the uploaded file to public/uploads/products/<productId>/ and
- *  records a ProductImage row. Local disk storage — fine for a single-
- *  admin, ~80-product catalogue on one Vercel/Node deployment; swap for
- *  blob storage later if the catalogue or admin count grows. */
+/** Uploads the file to Vercel Blob and records a ProductImage row.
+ *
+ *  Phase 8 carry-forward fix: this used to write to public/uploads/products/
+ *  on local disk, which does not persist on Vercel's serverless/ephemeral
+ *  filesystem in production. Vercel Blob gives every image a real,
+ *  persistent, publicly-readable URL instead — `webPath` now stores that
+ *  full URL rather than a local `/uploads/...` path. No data migration was
+ *  needed for this switch since no real product photos existed in the
+ *  database yet (see README "Phase 8 decisions"). */
 export async function saveProductImage(
   productId: string,
   file: File,
@@ -56,23 +58,21 @@ export async function saveProductImage(
   if (file.size === 0) return "No file was selected.";
   if (!file.type.startsWith("image/")) return "That file isn't an image.";
 
-  const productDir = path.join(UPLOAD_ROOT, productId);
-  await mkdir(productDir, { recursive: true });
+  const ext = file.name.includes(".") ? file.name.split(".").pop() : "jpg";
+  const pathname = `products/${productId}/${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`;
 
-  const ext = path.extname(file.name) || ".jpg";
-  const filename = `${Date.now()}-${randomUUID().slice(0, 8)}${ext}`;
-  const diskPath = path.join(productDir, filename);
-  const webPath = `/uploads/products/${productId}/${filename}`;
-
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(diskPath, buffer);
+  const blob = await put(pathname, file, {
+    access: "public",
+    addRandomSuffix: false,
+    contentType: file.type,
+  });
 
   const pool = getPool();
   await pool.query(
     `INSERT INTO product_images
        (id, product_id, type, web_path, source, alt_text, image_status, updated_at)
      VALUES ($1, $2, $3, $4, 'own_photograph', $5, 'available', now())`,
-    [randomUUID(), productId, type, webPath, altText],
+    [randomUUID(), productId, type, blob.url, altText],
   );
 
   return null;
@@ -89,10 +89,9 @@ export async function deleteProductImage(id: string): Promise<void> {
   await pool.query(`DELETE FROM product_images WHERE id = $1`, [id]);
 
   if (webPath) {
-    const diskPath = path.join(process.cwd(), "public", webPath);
-    await unlink(diskPath).catch(() => {
-      // File already gone / never existed on disk — the DB row is what
-      // matters for correctness, so don't fail the delete over this.
+    await del(webPath).catch(() => {
+      // Blob already gone / never existed — the DB row is what matters
+      // for correctness, so don't fail the delete over this.
     });
   }
 }

@@ -9,7 +9,7 @@ import "../globals.css";
 // public SiteHeader/SiteFooter/organization JSON-LD around it, and it
 // should never be indexed. See "Phase 7 decisions" in README.
 export const metadata: Metadata = {
-  title: "Admin — NovaCure Surgimed Suppliers",
+  title: "Admin — NovaCure SurgiMed Suppliers",
   robots: { index: false, follow: false },
 };
 

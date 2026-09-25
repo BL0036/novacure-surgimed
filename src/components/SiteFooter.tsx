@@ -1,5 +1,13 @@
 import Link from "next/link";
-import { FOOTER_NAV, SITE_FULL_NAME } from "@/lib/site";
+import {
+  FOOTER_NAV,
+  SITE_FULL_NAME,
+  CONTACT_ADDRESS,
+  CONTACT_PHONE_DISPLAY,
+  CONTACT_PHONE_TEL,
+  CONTACT_WHATSAPP_URL,
+  CONTACT_EMAIL,
+} from "@/lib/site";
 
 export function SiteFooter() {
   return (
@@ -17,10 +25,28 @@ export function SiteFooter() {
           ))}
         </div>
 
-        {/* Contact details are placeholders — real values come from the
-            project owner before Phase 8 (see Phase 2 plan §4). */}
-        <div className="text-body-muted mt-6">
-          <p>Contact details coming soon.</p>
+        <div className="text-body-muted mt-6 flex flex-col gap-1 text-sm sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-1">
+          <span>{CONTACT_ADDRESS}</span>
+          <a
+            href={`tel:${CONTACT_PHONE_TEL}`}
+            className="rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            {CONTACT_PHONE_DISPLAY}
+          </a>
+          <a
+            href={CONTACT_WHATSAPP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            WhatsApp
+          </a>
+          <a
+            href={`mailto:${CONTACT_EMAIL}`}
+            className="rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            {CONTACT_EMAIL}
+          </a>
         </div>
 
         <p className="text-small-muted mt-6">

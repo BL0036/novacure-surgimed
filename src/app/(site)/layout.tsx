@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   ...buildMetadata({
     title: SITE_FULL_NAME,
     description:
-      "NovaCure Surgimed Suppliers — a multi-brand healthcare and orthopaedic product platform in Nepal.",
+      "NovaCure SurgiMed Suppliers — a multi-brand healthcare and orthopaedic product platform in Nepal.",
     path: "/",
   }),
   title: {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatPrice } from "@/lib/catalog";
+import { formatPrice } from "@/lib/format";
 
 interface ProductCardProps {
   href: string;
