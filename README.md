@@ -495,3 +495,35 @@ inventing copy or fabricating a size chart.
    banner (reusing createVariantAction's duplicate-SKU error convention
    rather than adding a second error mechanism) and the variant's other
    fields are left untouched, not partially saved.
+
+## Phase 9 (pilot) Task 2 — Lumbar Sacro Belt real content
+
+Applied via a one-off script, `scripts/phase9-lumbar-sacro-belt.ts`
+(`npm run db:phase9-lumbar-sacro-belt`), rather than by hand through the
+admin UI — a script is safer for a one-time content load like this
+because it's auditable, re-runnable, and refuses to guess if it finds
+zero or multiple matches for the product/variants (protects the "don't
+touch any other product" requirement mechanically instead of relying on
+careful clicking). Runs in one transaction.
+
+Verified against a local test database seeded to match what Phase 1's
+CSV import would have left (draft product, no descriptions, two variants
+by size_label, plus an unrelated second product to prove selectivity):
+script ran cleanly, updated exactly the intended rows, left the other
+product untouched, and a direct call to `getProductBySlug` (the same
+function the storefront product page calls) confirmed the product would
+render with the new status/description/features and both variants'
+correct price/stock/SKU data.
+
+**Found while verifying — flagging for a decision, not fixed here:**
+`getProductBySlug`/`ProductDetail`/`ProductVariantSummary` in
+`src/lib/catalog.ts` don't select or expose `manufacturerRefCode` or
+`measurementData` at all, and no page (product detail, `/size-guide`)
+has any UI for either. So while both variants' ref codes (A-513 for
+S/M/L/XL, B-513 for XXL) and the S/M/L/XL size chart are correctly saved
+in the database and visible in the admin edit form, none of it is
+visible anywhere on the public site — `/size-guide` in particular is
+still Phase 4's static "pending" page, unrelated to any specific
+product's data. That's a content pass, not a storefront gap — this
+script only applies data, it doesn't add display UI — so it's left for
+a future phase/instruction rather than added unilaterally here.

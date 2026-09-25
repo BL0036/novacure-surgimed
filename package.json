@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "import:products": "tsx scripts/import-products.ts",
     "db:seed-brand": "tsx scripts/seed-brand.ts",
-    "db:seed-admin": "tsx scripts/seed-admin.ts"
+    "db:seed-admin": "tsx scripts/seed-admin.ts",
+    "db:phase9-lumbar-sacro-belt": "tsx scripts/phase9-lumbar-sacro-belt.ts"
   },
   "dependencies": {
     "@prisma/client": "^7.10.0",
