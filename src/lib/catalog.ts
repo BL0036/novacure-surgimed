@@ -80,6 +80,36 @@ export async function getCategorySizeLabels(categoryId: string): Promise<string[
   }
 }
 
+export interface ProductWithSizeChart {
+  name: string;
+  slug: string;
+}
+
+/** Published products in a category that have a real size chart on at
+ *  least one variant (Phase 10 §2) — used by /size-guide to link out to
+ *  actual product pages instead of inventing chart data on the guide
+ *  page itself. Empty array (not a placeholder) when none exist yet. */
+export async function getProductsWithSizeChart(
+  categoryId: string,
+): Promise<ProductWithSizeChart[]> {
+  try {
+    const pool = getPool();
+    const res = await pool.query<{ name: string; slug: string }>(
+      `SELECT DISTINCT p.name, p.slug
+       FROM products p
+       JOIN product_variants v ON v.product_id = p.id
+       WHERE p.category_id = $1
+         AND p.publication_status = 'published'
+         AND v.measurement_data IS NOT NULL
+       ORDER BY p.name ASC`,
+      [categoryId],
+    );
+    return res.rows;
+  } catch {
+    return [];
+  }
+}
+
 interface ListCategoryProductsOptions {
   sort?: CategorySort;
   sizeLabel?: string;
@@ -104,12 +134,16 @@ export async function listCategoryProducts(
   }
 
   const whereClause = filters.join(" AND ");
+  // Phase 10 §4 — verified products lead, draft (and any other non-verified
+  // status) follow, regardless of which sort is active; name/price stay as
+  // the tiebreaker within each group rather than a second, competing order.
+  const statusRank = "(CASE WHEN p.status = 'verified' THEN 0 ELSE 1 END)";
   const orderBy =
     options.sort === "price-asc"
-      ? "min_price ASC NULLS LAST, p.name ASC"
+      ? `${statusRank} ASC, min_price ASC NULLS LAST, p.name ASC`
       : options.sort === "price-desc"
-        ? "min_price DESC NULLS LAST, p.name ASC"
-        : "p.name ASC";
+        ? `${statusRank} ASC, min_price DESC NULLS LAST, p.name ASC`
+        : `${statusRank} ASC, p.name ASC`;
 
   try {
     const pool = getPool();

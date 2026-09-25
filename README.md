@@ -566,3 +566,70 @@ S/M/L/XL, and `manufacturerRefCode: "B-513"` with `measurementData: null`
 for XXL — confirmed by direct query, and `SizeChart`'s shape check
 confirmed to return `true` for the real S/M/L/XL object and `false` for
 `null` and `{}`.
+
+## Phase 10 — connect Product Finder and Size Guide to real content
+
+Content-and-query work only — the Product Finder's 2-step flow, the
+product-detail size chart (Phase 9 Task 3), and no product/variant data
+were touched, per the request.
+
+1. **`/size-guide` rewritten from a flat "pending" list into real
+   per-category guidance.** The 8 categories the Product Finder maps to a
+   body area (`PRODUCT_FINDER_BODY_AREAS` in `src/lib/site.ts`) each get
+   the supplied "How to measure" paragraph — general measuring technique,
+   not manufacturer data, so it doesn't run into the "don't invent
+   numbers" rule Phase 4/9 followed. The other 3 categories (Traction &
+   Immobilization Equipment, Vascular, Consumables & Equipment) aren't
+   body-measurement products and keep the original "Measurement chart
+   pending" copy unchanged.
+2. **New `catalog.ts` query, `getProductsWithSizeChart(categoryId)`** —
+   published products in a category with a real size chart on at least
+   one variant (`measurement_data IS NOT NULL`). `/size-guide` calls it
+   per category and lists the results as "See real size chart: <name>"
+   links to the real product page; a category with none yet shows only
+   the general guidance, no placeholder line, matching the request.
+   Right now this surfaces exactly one link — the Lumbar Sacro Belt under
+   Back & Lumbar/Abdominal, the only product with real `measurementData`
+   (Phase 9 Task 2) — everything else still reads "pending" honestly.
+3. **Each category section on `/size-guide` has `id={slug}`** (the same
+   slug `/craftscare/[category]` already uses), so a category listing
+   page can deep-link into its own section.
+4. **Category listing pages (`/craftscare/[category]`) gained a small
+   "Not sure of your size? See how to measure" link** to
+   `/size-guide#<slug>`, placed just under the existing filter bar. Shown
+   for all 11 categories (reachable by direct browsing, not only the 8
+   Product Finder covers) rather than conditionally hidden for the 3
+   without real guidance yet — it still lands on that category's
+   section, which reads "pending" honestly for those three, so there's
+   no broken or misleading link either way.
+5. **`listCategoryProducts`'s default ordering now ranks `status =
+   'verified'` products ahead of everything else** (draft included) as
+   the primary sort key, with the existing name/price ordering kept as
+   the secondary key inside each group — applied uniformly across all
+   three sort options (name, price-asc, price-desc) rather than only the
+   unsorted default, since a "verified drops behind draft when you sort
+   by price" wrinkle didn't seem like an intentional part of the ask.
+   `publication_status = 'published'` (the pre-existing filter) is
+   unaffected — this only changes ordering among already-published rows,
+   not which rows are returned.
+
+**Verification:** `npx tsc --noEmit`, `npx eslint` on the changed files,
+and the existing Vitest suite (`src/lib/auth.test.ts`) all pass. A
+`next build` was attempted but fails on this sandbox's network for an
+unrelated, pre-existing reason (`next/font` can't reach
+`fonts.googleapis.com`, used by `src/app/admin/layout.tsx`, not touched
+this phase). Runtime verification against a seeded DB — the pattern
+Phase 9 used — wasn't possible here either: no local Postgres is
+installed, and `apt-get install postgresql` 404s against
+`security.ubuntu.com` from this sandbox. `getProductsWithSizeChart`'s
+SQL was checked by hand against the same tables/columns
+`getCategorySizeLabels` and `getProductBySlug` already query
+successfully (`product_variants.measurement_data`, `products.slug`), and
+the status-ordering `CASE` expression was checked against
+`prisma/schema.prisma`'s `ProductStatus` enum. Worth a real DB smoke
+test on a machine that can reach Postgres before this ships.
+
+**No GitHub remote is configured in this checkout** (`git remote -v` is
+empty) — this phase's work is committed locally only, same as it looks
+like Phases 7–9 were before this zip was produced. Add a remote and
+`git push` to actually get it onto GitHub.

@@ -108,6 +108,15 @@ export default async function CraftscareCategoryPage({
         availableSizes={availableSizes}
       />
 
+      <p className="mt-4 text-sm">
+        <Link
+          href={`/size-guide#${slug}`}
+          className="rounded-sm text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          Not sure of your size? See how to measure
+        </Link>
+      </p>
+
       {listing.products.length === 0 ? (
         <p className="text-body-muted mt-8">
           No products published in this category yet.
