@@ -134,6 +134,12 @@ model ProductVariant {
   sku       String @unique
   uom       String
 
+  // Phase 9 — most variants share the product-level manufacturerRefCode,
+  // but some products print a different ref code per size tier on the
+  // packaging (e.g. Lumbar Sacro Belt: A-513 for S/M/L/XL, B-513 for
+  // XXL). Nullable: falls back to Product.manufacturerRefCode when unset.
+  manufacturerRefCode String? @map("manufacturer_ref_code")
+
   // Internal cost price — never expose outside the database/service layer.
   // Nullable: a handful of source rows have no stockist rate or retail price
   // yet (see VerificationFlag "missing_price" on the product).

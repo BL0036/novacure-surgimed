@@ -464,3 +464,34 @@ queries, routing, or styling structure changed.
 6. **Craftscare brand blurb** -- real paragraph now in on
    `/brands/craftscare` and the homepage's existing Craftscare
    brand-intro section, replacing both TODOs.
+
+## Phase 9 (pilot) — schema + admin additions
+
+Task 1 of the Phase 9 pilot only — the variant-level manufacturer ref
+code and the size-chart JSON editor. Task 2 (applying the Lumbar Sacro
+Belt's real content) is not done yet: the request referenced "the text
+provided below" / "the JSON provided below" for the short/full
+description, features, and both `measurementData` blocks, but that
+content didn't actually come through with the request, only the
+placeholder note. Nothing was written to that product to avoid
+inventing copy or fabricating a size chart.
+
+1. **`ProductVariant.manufacturerRefCode`** (nullable `TEXT`) added via
+   a hand-written migration (`prisma/migrations/20260925030000_phase9_variant_ref_code/`),
+   same reason as the Phase 1/7 migrations — the Prisma CLI can't reach
+   `binaries.prisma.sh` from this environment. Real packaging can show a
+   different ref code per size tier (e.g. Lumbar Sacro Belt: A-513 for
+   S/M/L/XL, B-513 for XXL), which the old product-level-only field
+   couldn't represent.
+2. **Admin variant edit form** — new "Manufacturer ref code" input per
+   variant. When a variant's own code is empty, the input's placeholder
+   shows the product-level code and a helper line reads "Falls back to
+   product code: ..." so the admin can see what a customer-facing
+   fallback would show without the field silently having no value.
+3. **Admin variant edit form** — new "Size chart (JSON)" textarea for
+   the existing `measurementData` column, pretty-printed on load.
+   Validated server-side in `updateVariantAction` *before* any write
+   happens: invalid JSON redirects back with the existing `variantError`
+   banner (reusing createVariantAction's duplicate-SKU error convention
+   rather than adding a second error mechanism) and the variant's other
+   fields are left untouched, not partially saved.

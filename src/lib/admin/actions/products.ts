@@ -72,12 +72,34 @@ export async function updateVariantAction(
 ): Promise<void> {
   await requireAdminSession();
 
+  // Phase 9 — validate the size-chart JSON *before* writing anything, so
+  // an admin's typo doesn't wipe out the variant's other fields alongside
+  // a silently-broken measurementData value. Reuses the existing
+  // `variantError` query-param convention (see createVariantAction's
+  // duplicate-SKU error below) rather than inventing a second mechanism.
+  const rawMeasurementData = str(formData, "measurementData");
+  let measurementData: string | null = null;
+  if (rawMeasurementData) {
+    try {
+      JSON.parse(rawMeasurementData);
+      measurementData = rawMeasurementData;
+    } catch {
+      redirect(
+        `/admin/products/${productId}?variantError=${encodeURIComponent(
+          "Size chart (JSON) is not valid JSON — that variant was not saved.",
+        )}`,
+      );
+    }
+  }
+
   await updateVariant(variantId, {
     sizeLabel: str(formData, "sizeLabel"),
+    manufacturerRefCode: nullableStr(formData, "manufacturerRefCode"),
     stockistRate: nullableStr(formData, "stockistRate"),
     retailPrice: nullableStr(formData, "retailPrice"),
     mrp: str(formData, "mrp"),
     stockStatus: str(formData, "stockStatus") as StockStatus,
+    measurementData,
   });
 
   redirect(`/admin/products/${productId}`);

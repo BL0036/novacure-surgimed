@@ -236,11 +236,15 @@ export interface AdminVariant {
   sizeLabel: string;
   sku: string;
   uom: string;
+  manufacturerRefCode: string | null;
   stockistRate: string | null;
   retailPrice: string | null;
   mrp: string;
   vatStatus: VatStatus;
   stockStatus: StockStatus;
+  /** Pretty-printed JSON text (or null) — see UpdateVariantInput.measurementData
+   *  for why this is kept as text rather than the parsed object. */
+  measurementData: string | null;
 }
 
 export async function listProductVariants(productId: string): Promise<AdminVariant[]> {
@@ -250,13 +254,16 @@ export async function listProductVariants(productId: string): Promise<AdminVaria
     size_label: string;
     sku: string;
     uom: string;
+    manufacturer_ref_code: string | null;
     stockist_rate: string | null;
     retail_price: string | null;
     mrp: string;
     vat_status: VatStatus;
     stock_status: StockStatus;
+    measurement_data: unknown | null;
   }>(
-    `SELECT id, size_label, sku, uom, stockist_rate, retail_price, mrp, vat_status, stock_status
+    `SELECT id, size_label, sku, uom, manufacturer_ref_code, stockist_rate, retail_price,
+            mrp, vat_status, stock_status, measurement_data
      FROM product_variants WHERE product_id = $1 ORDER BY size_label`,
     [productId],
   );
@@ -265,20 +272,35 @@ export async function listProductVariants(productId: string): Promise<AdminVaria
     sizeLabel: r.size_label,
     sku: r.sku,
     uom: r.uom,
+    manufacturerRefCode: r.manufacturer_ref_code,
     stockistRate: r.stockist_rate,
     retailPrice: r.retail_price,
     mrp: r.mrp,
     vatStatus: r.vat_status,
     stockStatus: r.stock_status,
+    // pg returns jsonb columns already parsed — re-stringify pretty for
+    // the admin textarea so the form loads with readable JSON, not a
+    // single unformatted line.
+    measurementData: r.measurement_data
+      ? JSON.stringify(r.measurement_data, null, 2)
+      : null,
   }));
 }
 
 export interface UpdateVariantInput {
   sizeLabel: string;
+  manufacturerRefCode: string | null;
   stockistRate: string | null;
   retailPrice: string | null;
   mrp: string;
   stockStatus: StockStatus;
+  /** Validated JSON text (or null to clear) — validation happens in the
+   *  Server Action before this is called (see updateVariantAction), not
+   *  here, so the error can be shown back to the admin without a partial
+   *  save. Passed straight through as a bound text parameter; Postgres
+   *  applies its implicit text->jsonb assignment cast on UPDATE, so no
+   *  explicit JSON.parse/stringify round-trip is needed on the way in. */
+  measurementData: string | null;
 }
 
 export async function updateVariant(
@@ -288,15 +310,17 @@ export async function updateVariant(
   const pool = getPool();
   await pool.query(
     `UPDATE product_variants
-     SET size_label = $1, stockist_rate = $2, retail_price = $3, mrp = $4,
-         stock_status = $5, updated_at = now()
-     WHERE id = $6`,
+     SET size_label = $1, manufacturer_ref_code = $2, stockist_rate = $3, retail_price = $4,
+         mrp = $5, stock_status = $6, measurement_data = $7, updated_at = now()
+     WHERE id = $8`,
     [
       input.sizeLabel,
+      input.manufacturerRefCode,
       input.stockistRate,
       input.retailPrice,
       input.mrp,
       input.stockStatus,
+      input.measurementData,
       id,
     ],
   );

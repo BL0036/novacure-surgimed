@@ -205,6 +205,23 @@ export default async function EditProductPage({
                     />
                   </div>
                   <div>
+                    <Label htmlFor={`ref-${variant.id}`}>
+                      Manufacturer ref code{" "}
+                      <span className="font-normal text-muted">(optional)</span>
+                    </Label>
+                    <Input
+                      id={`ref-${variant.id}`}
+                      name="manufacturerRefCode"
+                      defaultValue={variant.manufacturerRefCode ?? ""}
+                      placeholder={product.manufacturerRefCode ?? undefined}
+                    />
+                    {!variant.manufacturerRefCode && product.manufacturerRefCode ? (
+                      <p className="text-small-muted mt-1">
+                        Falls back to product code: {product.manufacturerRefCode}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div>
                     <Label htmlFor={`mrp-${variant.id}`}>MRP</Label>
                     <Input
                       id={`mrp-${variant.id}`}
@@ -256,6 +273,24 @@ export default async function EditProductPage({
                     step="0.01"
                     defaultValue={variant.stockistRate ?? ""}
                   />
+                </div>
+
+                <div className="mt-3">
+                  <Label htmlFor={`measurement-${variant.id}`}>
+                    Size chart (JSON){" "}
+                    <span className="font-normal text-muted">(optional)</span>
+                  </Label>
+                  <Textarea
+                    id={`measurement-${variant.id}`}
+                    name="measurementData"
+                    defaultValue={variant.measurementData ?? ""}
+                    rows={6}
+                    className="font-mono text-xs"
+                    placeholder={'{\n  "chestCm": [70, 80],\n  "waistCm": [60, 70]\n}'}
+                  />
+                  <p className="text-small-muted mt-1">
+                    Must be valid JSON — invalid JSON is rejected and nothing is saved.
+                  </p>
                 </div>
 
                 <Button type="submit" variant="secondary" size="sm" className="mt-3">
