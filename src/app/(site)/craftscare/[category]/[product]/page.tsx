@@ -127,7 +127,10 @@ export default async function CraftscareProductPage({ params }: PageProps) {
           ) : null}
 
           <div className="mt-6 border-t border-border pt-6">
-            <VariantSelector variants={product.variants} />
+            <VariantSelector
+              variants={product.variants}
+              productManufacturerRefCode={product.manufacturerRefCode}
+            />
           </div>
 
           {product.fullDescription ? (

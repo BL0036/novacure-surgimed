@@ -4,9 +4,13 @@ import { useState } from "react";
 import { formatPrice } from "@/lib/format";
 import type { ProductVariantSummary } from "@/lib/catalog";
 import { Button } from "@/components/ui/Button";
+import { SizeChart } from "@/components/SizeChart";
 
 interface VariantSelectorProps {
   variants: ProductVariantSummary[];
+  /** Product-level manufacturerRefCode, used when a variant doesn't have
+   *  its own — same fallback the admin form already uses (Phase 9 §3). */
+  productManufacturerRefCode: string | null;
 }
 
 // Phase 8 §4 — real ProductVariant price/stock data, display only. There's
@@ -27,7 +31,10 @@ const STOCK_CLASSES: Record<ProductVariantSummary["stockStatus"], string> = {
   unknown: "bg-brand-tint text-muted",
 };
 
-export function VariantSelector({ variants }: VariantSelectorProps) {
+export function VariantSelector({
+  variants,
+  productManufacturerRefCode,
+}: VariantSelectorProps) {
   const [selectedId, setSelectedId] = useState(variants[0]?.id);
   const selected = variants.find((v) => v.id === selectedId) ?? variants[0];
 
@@ -38,6 +45,8 @@ export function VariantSelector({ variants }: VariantSelectorProps) {
       </p>
     );
   }
+
+  const refCode = selected.manufacturerRefCode ?? productManufacturerRefCode;
 
   return (
     <div>
@@ -66,6 +75,7 @@ export function VariantSelector({ variants }: VariantSelectorProps) {
       </p>
       <p className="text-small-muted mt-1">
         SKU {selected.sku} &middot; {selected.uom}
+        {refCode ? <> &middot; Ref {refCode}</> : null}
       </p>
 
       <span
@@ -73,6 +83,8 @@ export function VariantSelector({ variants }: VariantSelectorProps) {
       >
         {STOCK_LABEL[selected.stockStatus]}
       </span>
+
+      <SizeChart data={selected.measurementData} />
     </div>
   );
 }

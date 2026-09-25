@@ -527,3 +527,42 @@ still Phase 4's static "pending" page, unrelated to any specific
 product's data. That's a content pass, not a storefront gap — this
 script only applies data, it doesn't add display UI — so it's left for
 a future phase/instruction rather than added unilaterally here.
+
+## Phase 9 (pilot) Task 3 — surface variant ref code + size chart on the storefront
+
+Closes the display gap flagged at the end of Task 2. Content-only in
+effect (no product/variant data changed), but does touch code — the
+public catalog query didn't expose these two columns at all before this.
+
+1. **`catalog.ts`** — `ProductVariantSummary` gained `manufacturerRefCode`
+   and `measurementData`; `getProductBySlug`'s variant query now selects
+   `manufacturer_ref_code, measurement_data`, and `ProductDetail` gained
+   the product-level `manufacturerRefCode` too (needed for the fallback
+   in #3 below — the product query didn't select it before either).
+   `measurementData` is typed `unknown`, not a fixed shape, since
+   `schema.prisma` explicitly calls it free-form/varies by product type.
+2. **New `SizeChart` component** (`src/components/SizeChart.tsx`) renders
+   a size -> inches/cm table, but only after checking the JSON actually
+   looks like `{ [size]: { in?, cm? } }` — an unexpected shape or a
+   `null` (this product's XXL variant) renders nothing rather than an
+   empty table or a crash. Verified directly against both the real
+   S/M/L/XL data and `null` — see commit for the check.
+3. **`VariantSelector`** now takes a `productManufacturerRefCode` prop
+   and shows `selected.manufacturerRefCode ?? productManufacturerRefCode`
+   next to the SKU line — the exact same fallback the admin form already
+   uses (Phase 9 Task 1), not a second implementation of the same logic.
+   The size chart renders directly below, keyed to whichever variant is
+   currently selected, so switching sizes on a product with per-size
+   charts would swap the table too (not exercised by this product, since
+   only one of its two variants has chart data, but the component
+   doesn't special-case that).
+4. **`/size-guide` untouched**, per the explicit instruction — stays
+   Phase 4's general per-category placeholder.
+
+Verified against the same local seeded database as Task 2 (still has the
+real Lumbar Sacro Belt data from that run): `getProductBySlug` returns
+`manufacturerRefCode: "A-513"` and the full measurement object for
+S/M/L/XL, and `manufacturerRefCode: "B-513"` with `measurementData: null`
+for XXL — confirmed by direct query, and `SizeChart`'s shape check
+confirmed to return `true` for the real S/M/L/XL object and `false` for
+`null` and `{}`.

@@ -245,6 +245,13 @@ export interface ProductVariantSummary {
   retailPrice: string | null;
   mrp: string;
   stockStatus: "in_stock" | "out_of_stock" | "discontinued" | "unknown";
+  /** Phase 9 §1 — falls back to ProductDetail.manufacturerRefCode when
+   *  unset (same fallback the admin form uses). */
+  manufacturerRefCode: string | null;
+  /** Free-form per schema.prisma (jsonb) — pg returns it already parsed.
+   *  Left as `unknown` here rather than assuming a shape; the display
+   *  component (SizeChart) validates its own shape before rendering. */
+  measurementData: unknown | null;
 }
 
 export interface ProductImageSummary {
@@ -261,6 +268,7 @@ export interface ProductDetail {
   shortDescription: string | null;
   fullDescription: string | null;
   features: string | null;
+  manufacturerRefCode: string | null;
   /** ProductStatus, not PublicationStatus — used to gate Product JSON-LD
    *  (Phase 8 §5): only "published" status gets structured data, even
    *  though this query already only returns publication_status =
@@ -297,6 +305,7 @@ export async function getProductBySlug(
       short_description: string | null;
       full_description: string | null;
       features: string | null;
+      manufacturer_ref_code: string | null;
       status: ProductDetail["status"];
       category_id: string;
       category_name: string;
@@ -305,8 +314,8 @@ export async function getProductBySlug(
       brand_slug: string;
     }>(
       `SELECT p.id, p.name, p.slug, p.short_description, p.full_description, p.features,
-              p.status, c.id AS category_id, c.name AS category_name, c.slug AS category_slug,
-              b.name AS brand_name, b.slug AS brand_slug
+              p.manufacturer_ref_code, p.status, c.id AS category_id, c.name AS category_name,
+              c.slug AS category_slug, b.name AS brand_name, b.slug AS brand_slug
        FROM products p
        JOIN categories c ON c.id = p.category_id
        JOIN brands b ON b.id = p.brand_id
@@ -325,8 +334,11 @@ export async function getProductBySlug(
         retail_price: string | null;
         mrp: string;
         stock_status: ProductVariantSummary["stockStatus"];
+        manufacturer_ref_code: string | null;
+        measurement_data: unknown | null;
       }>(
-        `SELECT id, size_label, sku, uom, retail_price, mrp, stock_status
+        `SELECT id, size_label, sku, uom, retail_price, mrp, stock_status,
+                manufacturer_ref_code, measurement_data
          FROM product_variants WHERE product_id = $1 ORDER BY size_label ASC`,
         [product.id],
       ),
@@ -351,6 +363,7 @@ export async function getProductBySlug(
       shortDescription: product.short_description,
       fullDescription: product.full_description,
       features: product.features,
+      manufacturerRefCode: product.manufacturer_ref_code,
       status: product.status,
       categoryId: product.category_id,
       categoryName: product.category_name,
@@ -365,6 +378,8 @@ export async function getProductBySlug(
         retailPrice: r.retail_price,
         mrp: r.mrp,
         stockStatus: r.stock_status,
+        manufacturerRefCode: r.manufacturer_ref_code,
+        measurementData: r.measurement_data,
       })),
       images: imagesRes.rows
         .filter((r): r is typeof r & { web_path: string } => Boolean(r.web_path))
