@@ -17,6 +17,9 @@ export const metadata: Metadata = buildMetadata({
   path: "/contact",
 });
 
+// Phase 12 §3 — static page, revalidates hourly.
+export const revalidate = 3600;
+
 export default function ContactPage() {
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-20">

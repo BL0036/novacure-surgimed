@@ -8,6 +8,10 @@ export const metadata: Metadata = buildMetadata({
   path: "/about",
 });
 
+// Phase 12 §3 — static page, revalidates hourly rather than the 300s
+// product/category window.
+export const revalidate = 3600;
+
 export default function AboutPage() {
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-20">

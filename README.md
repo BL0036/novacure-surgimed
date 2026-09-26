@@ -718,3 +718,125 @@ codepath, which is what made the above possible without touching
 **No GitHub remote is configured in this checkout**, same as Phase 10 —
 this phase's work is committed locally only. See that phase's note for
 what's needed to actually push it.
+
+## Phase 12 — SEO + performance finishing pass
+
+Phase 3 had already built most of the metadata plumbing (`buildMetadata()`
+already set canonical URLs and OG/Twitter fields, on every page — every
+page already called it). What this phase actually found missing, after
+auditing rather than assuming: no `metadataBase`, no default `og:image`
+(so most pages shipped *no* image at all), no revalidation strategy, and
+— found during the audit, not just "confirmed" — a sitemap that had
+never actually been wired up to real product data despite a comment
+claiming it would be.
+
+1. **`metadataBase` added to `(site)/layout.tsx`** (the site's root
+   layout; `admin/layout.tsx` is its own separate root per Phase 7 and is
+   noindex/never shared, so it's out of scope here). Alongside it,
+   `SITE_URL`'s fallback in `src/lib/seo.ts` changed from
+   `https://www.novacure.com.np` to a deliberately-fake
+   `https://novacuresurgimed.example.com` with a `TODO(production)`
+   comment. Nothing in this project's history — no README decision, no
+   Phase 3 section (Phase 3 predates the "Phase N decisions" pattern) —
+   ever confirms `novacure.com.np` as an actual chosen domain; it read as
+   a real domain but was, as far as this codebase's paper trail shows,
+   a Phase 3 placeholder. That's exactly the trap the request's own
+   wording was guarding against, so it's fixed the same way the request
+   asked for: an unmistakable placeholder, not a plausible-looking guess.
+   Documented in `.env.example` (`NEXT_PUBLIC_SITE_URL`, previously
+   undocumented there even though `seo.ts` already read it).
+2. **Every page now gets an `og:image`.** `buildMetadata()` gained a
+   site-wide `DEFAULT_OG_IMAGE` (the real `public/brand/novacure-logo.png`,
+   1254×1254 — not a fabricated asset) used whenever a page doesn't pass
+   its own `image`. The product page's `generateMetadata` now passes the
+   product's own real photo (`product.images[0]`, already ordered
+   primary-first by `getProductBySlug`) when one exists, with its real
+   alt text; when a product has no photo yet, it falls through to the
+   same default logo like every other page — never a fabricated
+   product-specific image, per the request.
+3. **Revalidation:** `export const revalidate = 300` on the category page
+   (`craftscare/[category]`) and product page (`craftscare/[category]/
+   [product]`); `= 3600` on About, Contact, Size Guide, and For Hospitals
+   & Pharmacies, as specified. Two things worth being upfront about
+   rather than glossing over:
+   - The category page reads `searchParams` (sort/size/page), which
+     Next's own docs confirm opts the whole page into per-request dynamic
+     rendering — so `revalidate = 300` is a no-op for any visit that
+     includes a sort/size/page query string. It still governs the plain
+     URL (what the sitemap and every nav link point to). Making
+     filtered/sorted views themselves ISR-cacheable would mean
+     restructuring how filtering works — out of scope for a caching
+     pass, not something to fix quietly by leaving the setting off.
+   - The homepage isn't named in either bucket in the request (it lists
+     "product and category pages" and four specific static pages). It
+     got `revalidate = 300` anyway, as a judgment call: it live-queries
+     featured products the same way the category/product pages do, so
+     treating it as "static" would under-cache exactly the part of it
+     that actually changes.
+   - Confirmed (not assumed) that admin pages need no change:
+     `requireAdminSession()` calls `cookies()` on every protected admin
+     page, which is itself a Request-time API that forces dynamic
+     rendering — they were already correctly dynamic/uncached before
+     this phase touched anything.
+4. **`next/image` audit:** all three existing usages
+   (`SiteHeader`'s logo, `ProductGallery`'s main + thumbnail images, the
+   admin product-edit page's image list) already had either explicit
+   `width`/`height` or a `fill` inside an explicitly-sized container
+   (`aspect-square w-full`, `h-16 w-16`, etc.) — nothing to fix. Note:
+   `ProductCard` (category listings, search, homepage) has no
+   `next/image` at all — it's a Phase 5 stub that always renders a
+   placeholder SVG regardless of whether a product has a real photo, per
+   its own comment ("becomes a real `<Image>` once Phase 8/9 wires
+   photos in"), which never actually happened. That's a real content
+   gap, but it's not a `next/image` misuse (there's no `<Image>` there
+   to audit), and wiring it up would mean touching the image
+   pipeline/display layer beyond a caching-and-metadata pass — flagged
+   here rather than fixed, per the "don't rebuild the image pipeline"
+   instruction for this phase.
+5. **Sitemap: found broken, not just confirmed.** Despite a comment
+   claiming `sitemap.ts` would "automatically extend" once real products
+   existed, it only ever listed static/category-shell routes — zero
+   individual product URLs, even now that Phase 9-11 put real published
+   products in the database. Added `listPublishedProductsForSitemap()`
+   to `catalog.ts` and made `sitemap()` async, querying real
+   `publication_status = 'published'` products with each product's own
+   `updated_at` as `lastModified` (not `now()`, unlike the static
+   routes, since there's a real per-row timestamp to use here). Verified
+   against real data: both a photo-having and a photo-less test product
+   showed up correctly at `/sitemap.xml` with the right URLs.
+
+**Verification:** `npx tsc --noEmit`, `npx eslint .`, and the existing
+Vitest suite all pass. Local Postgres (still set up from Phase 11's
+session) let this get real end-to-end confirmation again: seeded two
+published test products — one with a real `product_images` row pointing
+at a fake-but-remotePattern-matching Blob URL, one without — plus the
+category they needed, ran `next dev`, and fetched real pages over HTTP.
+Confirmed by reading the actual response HTML: the photo-having product's
+`og:image`/`twitter:image` is that photo's own URL with its real alt
+text; the photo-less product, the category page, the homepage, and
+Size Guide all fall back to the default logo with correct
+`og:image:width`/`height`/`alt`; every canonical/`og:url` uses the new
+placeholder domain; `/sitemap.xml` lists both real product URLs with
+correct `<loc>`; `/robots.txt` still points its `Sitemap:` line at the
+new domain. No `metadataBase` warning appeared in the dev server log
+(it would have, pre-Phase-12, the first time a relative/absolute image
+URL got resolved without one).
+
+What couldn't be verified: actual ISR/Full-Route-Cache response headers.
+`next dev` always renders on-demand with `Cache-Control: no-cache,
+must-revalidate` regardless of `revalidate` config — that's documented
+Next.js dev behavior, not a bug — and `next build` still fails in this
+sandbox for the same pre-existing, unrelated reason as Phases 10-11
+(`next/font` can't reach `fonts.googleapis.com` from `admin/layout.tsx`,
+which this phase didn't touch). The `revalidate` exports are confirmed
+correct by Next's own route-segment-config docs (a statically-analyzable
+number literal, the only form it accepts) and by code review, not by a
+live production cache header — worth a real `next build && next start`
+check on a machine that can reach Google Fonts before this ships.
+
+**No GitHub remote is configured in this checkout** — still true, this
+is the third phase running with local-only commits. See Phase 10's note
+for what pushing it actually needs (a remote URL and, most likely,
+credentials); nothing in this project's files names one, so this can't
+be resolved from inside a coding session — it needs the actual GitHub
+repo URL (and how to authenticate to it) from whoever owns the project.

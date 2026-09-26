@@ -12,6 +12,13 @@ export const metadata: Metadata = buildMetadata({
   noIndex: true,
 });
 
+// Phase 12 §3 — static page, revalidates hourly. It does query the DB
+// (getProductsWithSizeChart, Phase 10) for which categories have a real
+// size-chart product to link to, but that changes rarely — an hour's
+// staleness on "is there a real size chart yet" is fine, and the request
+// puts this page in the "static pages" bucket explicitly regardless.
+export const revalidate = 3600;
+
 // Phase 10 §1 — generic measuring technique per category, as supplied
 // with the Phase 10 request. This is how-to-measure guidance (a soft
 // tape measure and where to hold it), not a manufacturer size chart, so

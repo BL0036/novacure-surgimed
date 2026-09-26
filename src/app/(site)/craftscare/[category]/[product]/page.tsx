@@ -28,6 +28,11 @@ export function generateStaticParams() {
   return [];
 }
 
+// Phase 12 §3 — clean ISR: unlike the category page, this route only
+// reads `params` (not `searchParams`), so it's fully eligible for the
+// Full Route Cache and this actually takes effect.
+export const revalidate = 300;
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { category: categorySlug, product: productSlug } = await params;
   const category = getCraftscareCategoryBySlug(categorySlug);
@@ -36,12 +41,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const product = await getProductBySlug("craftscare", categorySlug, productSlug);
   if (!product) return {};
 
+  // Phase 12 §2 — a product's own real photo (Phase 8 image pipeline)
+  // if it has one, ordered primary-first by getProductBySlug; otherwise
+  // no `image` at all, so buildMetadata falls back to the site-wide
+  // default logo. Never fabricates a product-specific image.
+  const primaryImage = product.images[0];
+
   return buildMetadata({
     title: buildProductTitle(product.name, product.categoryName, product.brandName),
     description:
       product.shortDescription ??
       `${product.name} from ${product.brandName}, carried by NovaCure SurgiMed Suppliers in Nepal.`,
     path: `/craftscare/${categorySlug}/${productSlug}`,
+    image: primaryImage?.webPath,
+    imageAlt: primaryImage?.altText ?? product.name,
   });
 }
 

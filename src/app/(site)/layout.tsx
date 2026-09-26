@@ -5,11 +5,19 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { JsonLd } from "@/components/JsonLd";
 import { SITE_FULL_NAME } from "@/lib/site";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata, SITE_URL } from "@/lib/seo";
 import { organizationJsonLd } from "@/lib/structured-data";
 import "../globals.css";
 
 export const metadata: Metadata = {
+  // Phase 12 §1 — base URL for every URL-based metadata field (canonical,
+  // og:url, og:image, twitter:image) in this route segment and below.
+  // buildMetadata() already builds fully-qualified URLs itself, so this
+  // mostly matters as a safety net (any relative URL Next.js metadata
+  // field added later resolves correctly instead of erroring) and to
+  // silence Next's "no metadataBase" warning. See src/lib/seo.ts for the
+  // production-domain TODO.
+  metadataBase: new URL(SITE_URL),
   ...buildMetadata({
     title: SITE_FULL_NAME,
     description:

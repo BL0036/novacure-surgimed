@@ -31,6 +31,18 @@ export function generateStaticParams() {
   }));
 }
 
+// Phase 12 §3 — 300s revalidation for category pages. Caveat worth being
+// honest about: this page reads `searchParams` (sort/size/page), and per
+// Next.js's own docs that opts the whole page into dynamic (per-request)
+// rendering regardless of `revalidate` — so this setting is a no-op for
+// any visit that includes a sort/size/page query string. It still
+// matters for the plain, param-less URL (what the sitemap and every nav
+// link point to) and documents the intended freshness window either
+// way. Fixing this properly (so filtered/sorted views are ISR-cacheable
+// too) would mean restructuring how filtering works — out of scope for
+// this SEO/performance pass.
+export const revalidate = 300;
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { category: slug } = await params;
   const category = getCraftscareCategoryBySlug(slug);

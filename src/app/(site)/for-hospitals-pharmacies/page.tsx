@@ -11,6 +11,13 @@ export const metadata: Metadata = buildMetadata({
   noIndex: true,
 });
 
+// Phase 12 §3 — static page, revalidates hourly. The embedded
+// EnquiryForm is a Client Component that submits via a Server Action at
+// interaction time, not at render time — it doesn't touch the database
+// during the page's own server render, so it doesn't affect this page's
+// cacheability.
+export const revalidate = 3600;
+
 // Phase 11 §3 — real enquiry messaging for hospitals/pharmacies, replacing
 // the Phase 2/8 ComingSoon placeholder. This is the same general-purpose
 // enquiry form used elsewhere (Phase 11 §2b), not attached to a specific

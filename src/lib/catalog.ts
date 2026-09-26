@@ -511,6 +511,44 @@ export async function getFeaturedProducts(
   }
 }
 
+export interface SitemapProduct {
+  slug: string;
+  categorySlug: string;
+  updatedAt: string;
+}
+
+/** Every published product for one brand, for sitemap.ts — Phase 12 §5.
+ *  Deliberately minimal (no name/price/description): the sitemap only
+ *  needs a URL and a lastModified date, and this way it never has to
+ *  change shape again just because product-detail fields change. */
+export async function listPublishedProductsForSitemap(
+  brandSlug: string,
+): Promise<SitemapProduct[]> {
+  try {
+    const pool = getPool();
+    const res = await pool.query<{
+      slug: string;
+      category_slug: string;
+      updated_at: string;
+    }>(
+      `SELECT p.slug, c.slug AS category_slug, p.updated_at
+       FROM products p
+       JOIN categories c ON c.id = p.category_id
+       JOIN brands b ON b.id = p.brand_id
+       WHERE b.slug = $1 AND p.publication_status = 'published'
+       ORDER BY p.slug ASC`,
+      [brandSlug],
+    );
+    return res.rows.map((r) => ({
+      slug: r.slug,
+      categorySlug: r.category_slug,
+      updatedAt: r.updated_at,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 // Re-exported from ./format (not defined here) so Client Components can
 // import formatPrice without pulling in this file's `pg`/getPool() import
 // chain — see format.ts for why.

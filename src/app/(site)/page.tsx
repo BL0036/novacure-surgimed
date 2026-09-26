@@ -11,6 +11,12 @@ import { ProductCard } from "@/components/ProductCard";
 // placeholder copy pending the project owner (Phase 8 §5) — nothing here
 // is invented marketing content.
 
+// Phase 12 §3 — same 300s revalidation window as the product/category
+// pages, not the 3600s "static pages" bucket: the Featured products
+// section below queries live product data, same as those pages, even
+// though this route isn't literally named in either list in the request.
+export const revalidate = 300;
+
 export default async function Home() {
   const featured = await getFeaturedProducts("craftscare", 8);
 
