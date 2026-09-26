@@ -15,6 +15,15 @@ export const CONTACT_PHONE_DISPLAY = "+977-9803261913";
 export const CONTACT_PHONE_TEL = "+9779803261913";
 export const CONTACT_WHATSAPP_URL = "https://wa.me/9779803261913";
 export const CONTACT_EMAIL = "novacuresurgimed@gmail.com";
+
+// Phase 11 §2a — same WhatsApp number as CONTACT_WHATSAPP_URL, with a
+// pre-filled message. wa.me accepts a `text` query param that opens the
+// chat with the message already typed (not sent) — the visitor still
+// has to hit send, so this never contacts anyone on its own.
+export function buildWhatsAppOrderUrl(message: string): string {
+  return `${CONTACT_WHATSAPP_URL}?text=${encodeURIComponent(message)}`;
+}
+
 export const CONTACT_HOURS = [
   { days: "Sunday – Friday", hours: "10:00 AM – 6:00 PM" },
   { days: "Saturday", hours: "Closed" },

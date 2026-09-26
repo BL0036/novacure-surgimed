@@ -99,6 +99,7 @@ model Product {
   variants          ProductVariant[]
   images            ProductImage[]
   verificationFlags VerificationFlag[]
+  enquiries         Enquiry[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -153,6 +154,8 @@ model ProductVariant {
   // Free-form measurement detail (dimensions, weight, size-chart data, etc.)
   // that doesn't warrant its own column and varies by product type.
   measurementData Json? @map("measurement_data")
+
+  enquiries Enquiry[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -275,3 +278,52 @@ model AdminSession {
   @@index([adminUserId])
   @@map("admin_sessions")
 }
+
+// ---------------------------------------------------------------------------
+// Enquiry — Phase 11. A customer/hospital enquiry captured from the
+// "Order via WhatsApp" / "Request this product" CTAs on a product page, or
+// the general enquiry form on /for-hospitals-pharmacies. No cart, no
+// payment integration, no customer accounts — this is the entire order
+// pipeline for this phase: a lead an admin follows up on by hand (phone/
+// WhatsApp), tracked through `status` here.
+// ---------------------------------------------------------------------------
+enum EnquiryStatus {
+  new
+  contacted
+  confirmed
+  fulfilled
+  cancelled
+}
+
+model Enquiry {
+  id String @id @default(cuid())
+
+  // Both nullable: a hospital/pharmacy enquiry from the general form isn't
+  // tied to one product. Set null (not cascade-deleted) if the product or
+  // variant it referenced is later removed — the enquiry is a customer
+  // record that should outlive the catalogue row.
+  productId String?  @map("product_id")
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  variantId String?         @map("variant_id")
+  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  customerName     String  @map("customer_name")
+  phone            String
+  email            String?
+  organizationName String? @map("organization_name")
+  addressOrArea    String  @map("address_or_area")
+  quantity         Int     @default(1)
+  message          String?
+
+  status EnquiryStatus @default(new)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([productId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("enquiries")
+}
+

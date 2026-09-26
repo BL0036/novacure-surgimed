@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
-import { ComingSoon } from "@/components/ComingSoon";
+import { CONTACT_WHATSAPP_URL, CONTACT_PHONE_DISPLAY, CONTACT_EMAIL } from "@/lib/site";
 import { buildMetadata } from "@/lib/seo";
+import { EnquiryForm } from "@/components/EnquiryForm";
+import { Button } from "@/components/ui/Button";
 
 export const metadata: Metadata = buildMetadata({
   title: "For Hospitals & Pharmacies",
@@ -9,11 +11,50 @@ export const metadata: Metadata = buildMetadata({
   noIndex: true,
 });
 
+// Phase 11 §3 — real enquiry messaging for hospitals/pharmacies, replacing
+// the Phase 2/8 ComingSoon placeholder. This is the same general-purpose
+// enquiry form used elsewhere (Phase 11 §2b), not attached to a specific
+// product, with organizationName shown and relabeled for this audience.
+// A full wholesale/business-account system (bulk pricing, credit terms,
+// a separate login) is still a later, separate phase — this page is
+// enquiry intake only, same as the request stated.
 export default function ForHospitalsPharmaciesPage() {
   return (
-    <ComingSoon
-      title="For Hospitals & Pharmacies — content coming soon"
-      note="B2B enquiry messaging placeholder. The full wholesale/business-account system is a later, separate phase — this page is simple messaging only."
-    />
+    <div className="mx-auto w-full max-w-3xl px-6 py-20">
+      <p className="text-eyebrow">Wholesale &amp; institutional</p>
+      <h1 className="text-page-title mt-2">For Hospitals &amp; Pharmacies</h1>
+      <p className="text-body-muted mt-3">
+        Ordering Craftscare orthopaedic products for a hospital, clinic, or pharmacy?
+        Send us your requirements below, or reach us directly on WhatsApp or phone,
+        and we&rsquo;ll follow up to confirm availability, pricing, and delivery.
+      </p>
+
+      <Button
+        href={CONTACT_WHATSAPP_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        variant="primary"
+        className="mt-6"
+      >
+        Message us on WhatsApp
+      </Button>
+      <p className="text-small-muted mt-2">
+        Or call {CONTACT_PHONE_DISPLAY} / email{" "}
+        <a
+          href={`mailto:${CONTACT_EMAIL}`}
+          className="rounded-sm hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          {CONTACT_EMAIL}
+        </a>
+        .
+      </p>
+
+      <div className="mt-10 border-t border-border pt-8">
+        <h2 className="text-section-heading">Send an enquiry</h2>
+        <div className="mt-4">
+          <EnquiryForm showOrganization organizationLabel="Hospital/Pharmacy name" />
+        </div>
+      </div>
+    </div>
   );
 }

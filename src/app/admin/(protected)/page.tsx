@@ -13,6 +13,7 @@ const CARDS = [
     href: "/admin/verification-flags",
   },
   { key: "pendingImages", label: "Photos pending", href: "/admin/products" },
+  { key: "newEnquiries", label: "New enquiries", href: "/admin/enquiries" },
 ] as const;
 
 export default async function AdminDashboardPage() {
@@ -22,7 +23,7 @@ export default async function AdminDashboardPage() {
     <div className="mx-auto w-full max-w-5xl px-6 py-10">
       <h1 className="text-page-title">Dashboard</h1>
 
-      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
         {CARDS.map((card) => (
           <Link
             key={card.key}
@@ -51,6 +52,11 @@ export default async function AdminDashboardPage() {
               className="text-brand hover:underline"
             >
               Review unresolved verification flags
+            </Link>
+          </li>
+          <li>
+            <Link href="/admin/enquiries?status=new" className="text-brand hover:underline">
+              Review new enquiries
             </Link>
           </li>
         </ul>

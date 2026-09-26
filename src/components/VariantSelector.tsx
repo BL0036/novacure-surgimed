@@ -3,20 +3,28 @@
 import { useState } from "react";
 import { formatPrice } from "@/lib/format";
 import type { ProductVariantSummary } from "@/lib/catalog";
+import { buildWhatsAppOrderUrl } from "@/lib/site";
 import { Button } from "@/components/ui/Button";
 import { SizeChart } from "@/components/SizeChart";
+import { EnquiryForm } from "@/components/EnquiryForm";
 
 interface VariantSelectorProps {
   variants: ProductVariantSummary[];
   /** Product-level manufacturerRefCode, used when a variant doesn't have
    *  its own — same fallback the admin form already uses (Phase 9 §3). */
   productManufacturerRefCode: string | null;
+  /** Phase 11 §2 — needed for the WhatsApp pre-filled message and to
+   *  attach the "Request this product" enquiry to the right product. */
+  productId: string;
+  productName: string;
+  /** Full absolute URL (SITE_URL + path), included in the WhatsApp
+   *  message so the person on the other end can open the exact page. */
+  productUrl: string;
 }
 
-// Phase 8 §4 — real ProductVariant price/stock data, display only. There's
-// no cart/ordering system yet (Phase 11), so this just lets the visitor
-// switch which size's price and stock status they're looking at; it
-// doesn't submit anything.
+// Phase 8 §4 — real ProductVariant price/stock data, display only, plus
+// Phase 11 §2's two order-lead CTAs (WhatsApp / "Request this product").
+// Still no cart/payment — see README "Phase 11 decisions".
 const STOCK_LABEL: Record<ProductVariantSummary["stockStatus"], string> = {
   in_stock: "In stock",
   out_of_stock: "Out of stock",
@@ -34,8 +42,12 @@ const STOCK_CLASSES: Record<ProductVariantSummary["stockStatus"], string> = {
 export function VariantSelector({
   variants,
   productManufacturerRefCode,
+  productId,
+  productName,
+  productUrl,
 }: VariantSelectorProps) {
   const [selectedId, setSelectedId] = useState(variants[0]?.id);
+  const [showForm, setShowForm] = useState(false);
   const selected = variants.find((v) => v.id === selectedId) ?? variants[0];
 
   if (!selected) {
@@ -47,6 +59,8 @@ export function VariantSelector({
   }
 
   const refCode = selected.manufacturerRefCode ?? productManufacturerRefCode;
+
+  const whatsAppMessage = `Hi, I'd like to order: ${productName} (${selected.sizeLabel}).\n${productUrl}`;
 
   return (
     <div>
@@ -85,6 +99,31 @@ export function VariantSelector({
       </span>
 
       <SizeChart data={selected.measurementData} />
+
+      <div className="mt-6 flex flex-wrap gap-3 border-t border-border pt-6">
+        <Button
+          href={buildWhatsAppOrderUrl(whatsAppMessage)}
+          target="_blank"
+          rel="noopener noreferrer"
+          variant="primary"
+        >
+          Order via WhatsApp
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => setShowForm((v) => !v)}
+          aria-expanded={showForm}
+        >
+          {showForm ? "Hide request form" : "Request this product"}
+        </Button>
+      </div>
+
+      {showForm ? (
+        <div className="mt-4 rounded-lg border border-border p-4">
+          <EnquiryForm productId={productId} variantId={selected.id} />
+        </div>
+      ) : null}
     </div>
   );
 }

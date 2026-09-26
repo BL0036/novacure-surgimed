@@ -130,6 +130,9 @@ export default async function CraftscareProductPage({ params }: PageProps) {
             <VariantSelector
               variants={product.variants}
               productManufacturerRefCode={product.manufacturerRefCode}
+              productId={product.id}
+              productName={product.name}
+              productUrl={`${SITE_URL}${productPath}`}
             />
           </div>
 

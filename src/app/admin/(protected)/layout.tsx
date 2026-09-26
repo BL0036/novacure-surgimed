@@ -8,6 +8,7 @@ const ADMIN_NAV = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/products", label: "Products" },
   { href: "/admin/verification-flags", label: "Verification flags" },
+  { href: "/admin/enquiries", label: "Enquiries" },
 ];
 
 export default async function ProtectedAdminLayout({

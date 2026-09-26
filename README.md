@@ -31,6 +31,8 @@ Create the database and apply the schema:
 createdb novacure_dev
 psql -d novacure_dev -f prisma/migrations/20260923112504_init/migration.sql
 psql -d novacure_dev -f prisma/migrations/20260924040000_phase7_admin/migration.sql
+psql -d novacure_dev -f prisma/migrations/20260925030000_phase9_variant_ref_code/migration.sql
+psql -d novacure_dev -f prisma/migrations/20260926050000_phase11_enquiries/migration.sql
 ```
 
 ### About Prisma CLI (`generate` / `migrate dev`)
@@ -633,3 +635,86 @@ test on a machine that can reach Postgres before this ships.
 empty) — this phase's work is committed locally only, same as it looks
 like Phases 7–9 were before this zip was produced. Add a remote and
 `git push` to actually get it onto GitHub.
+
+## Phase 11 — enquiry + order system (no cart, no payment)
+
+The entire "ordering" pipeline for this phase is a customer-submitted lead
+an admin follows up on by hand (phone/WhatsApp) — no cart, no payment
+integration, no customer accounts, no automated email/SMS. That scope
+line shaped every decision below.
+
+1. **New `Enquiry` model + hand-written migration**
+   (`prisma/migrations/20260926050000_phase11_enquiries/`), same reason
+   as every migration since Phase 1 (see "About Prisma CLI"). `productId`
+   / `variantId` are nullable with `ON DELETE SET NULL`, not `CASCADE` —
+   an enquiry is a customer record and should outlive the catalogue row
+   it referenced if that product is later removed. Also patched a
+   pre-existing gap: the Phase 9 migration was missing from this file's
+   setup instructions above; added it alongside Phase 11's.
+2. **Public write path is deliberately separate from admin.**
+   `src/lib/enquiries.ts` (`createEnquiry`, one INSERT) and
+   `src/lib/actions/enquiries.ts` (`createEnquiryAction`, the one
+   `"use server"` an unauthenticated visitor can call) are new,
+   parallel to but not merged into `src/lib/admin/enquiries.ts` — the
+   same separation `catalog.ts` vs `admin/products.ts` already
+   established, but doubly important here since this is the one path
+   that writes to the database with no `requireAdminSession()` gate at
+   all.
+3. **`EnquiryForm` (`src/components/EnquiryForm.tsx`) is one component,
+   reused as-is** on the product page (bound to a product/variant) and
+   `/for-hospitals-pharmacies` (bound to nothing), with a
+   `showOrganization`/`organizationLabel` prop for the latter —
+   `organizationName` isn't shown at all on the product-page form, per
+   the field list in the request. Built on `useActionState` rather than
+   a redirecting `<form action>` (the admin pattern) so the success
+   message ("Thanks — we'll contact you shortly to confirm your order.")
+   renders in place instead of navigating away from the product page.
+   Caught during verification: a `"use server"` file can only export
+   async functions, so the shared idle-state constant had to move out of
+   `actions/enquiries.ts` into the client component itself, not stay
+   exported alongside the action.
+4. **Product page gets both Phase 11 §2 CTAs on `VariantSelector`**
+   (it already tracks the selected variant): "Order via WhatsApp" via a
+   new `buildWhatsAppOrderUrl()` helper in `site.ts` (same number as
+   `CONTACT_WHATSAPP_URL`, with a `?text=` pre-filled message — the
+   visitor still has to hit send in WhatsApp, this never messages
+   anyone on its own) including the product name, selected size, and
+   full page URL; and "Request this product", a toggle that reveals
+   `EnquiryForm` bound to that product/variant.
+5. **`/for-hospitals-pharmacies` rewritten from the Phase 2/8
+   `ComingSoon` placeholder** to real content: WhatsApp/phone/email,
+   plus the same `EnquiryForm` with `organizationName` shown and
+   labeled "Hospital/Pharmacy name". A full wholesale/business-account
+   system (bulk pricing, credit terms, its own login) is still a later,
+   separate phase, as before — this is enquiry intake only.
+6. **Admin `/admin/enquiries`** (newest first, status-filter tabs) and
+   `/admin/enquiries/[id]` (contact/product detail + a status-update
+   form, same select-plus-submit pattern the product edit page uses).
+   Nav link added; `getDashboardCounts()` gained `newEnquiries`, shown
+   as a 5th card on the dashboard linking to the filtered list.
+
+**Verification:** `npx tsc --noEmit`, `npx eslint .`, and the existing
+Vitest suite all pass. Unlike Phase 10, a real local Postgres was
+available this time (`apt-get install postgresql` succeeded once
+`apt-get update` was re-run first — Phase 10's 404 looks like it was a
+transient mirror issue, not a persistent block) — so this phase got a
+genuine end-to-end pass rather than a static-only one: applied all four
+migrations in order to a fresh database, seeded a brand/category/
+product/variant and a real admin user, ran `next dev`, and drove it
+over real HTTP — both the public enquiry submission (matched the exact
+`useActionState` progressive-enhancement multipart POST a JS-disabled
+browser would send, hidden fields included) and the admin status-update
+form (same for its plain server-action POST) — then confirmed each
+write in Postgres directly and by re-fetching the admin pages. That
+first HTTP attempt at the public form is what caught the `"use server"`
+export bug in point 3 above — a good reminder that `tsc`/`eslint`
+passing doesn't catch everything Next.js's server-action boundary
+enforces. `next build` still fails in this sandbox for the same
+pre-existing, unrelated reason as Phase 10 (`next/font` can't reach
+`fonts.googleapis.com`); `next dev` doesn't hit that same hard-fail
+codepath, which is what made the above possible without touching
+`admin/layout.tsx`'s fonts.
+
+**No GitHub remote is configured in this checkout**, same as Phase 10 —
+this phase's work is committed locally only. See that phase's note for
+what's needed to actually push it.
