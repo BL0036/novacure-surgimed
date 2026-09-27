@@ -31,6 +31,10 @@ echo === Committing ===
 git commit -m "%COMMITMSG%"
 
 echo.
+echo === Pulling any remote changes first ===
+git pull origin main --no-edit
+
+echo.
 echo === Pushing to GitHub (this triggers a Vercel deploy) ===
 git push origin main
 
