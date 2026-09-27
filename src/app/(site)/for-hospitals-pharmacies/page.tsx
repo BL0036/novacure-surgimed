@@ -32,8 +32,8 @@ export default function ForHospitalsPharmaciesPage() {
       <h1 className="text-page-title mt-2">For Hospitals &amp; Pharmacies</h1>
       <p className="text-body-muted mt-3">
         Ordering Craftscare orthopaedic products for a hospital, clinic, or pharmacy?
-        Send us your requirements below, or reach us directly on WhatsApp or phone,
-        and we&rsquo;ll follow up to confirm availability, pricing, and delivery.
+        Send us your requirements below, or reach us directly on WhatsApp or phone, and
+        we&rsquo;ll follow up to confirm availability, pricing, and delivery.
       </p>
 
       <Button
@@ -59,7 +59,21 @@ export default function ForHospitalsPharmaciesPage() {
       <div className="mt-10 border-t border-border pt-8">
         <h2 className="text-section-heading">Send an enquiry</h2>
         <div className="mt-4">
-          <EnquiryForm showOrganization organizationLabel="Hospital/Pharmacy name" />
+          {/* Phase 13 §2: deliberately impure below. This computes the
+              Server Component's render time, baked into the HTML as the
+              enquiry form's min-submit-time anti-spam timestamp (see
+              EnquiryForm's `renderedAt` prop doc comment). It's a
+              one-shot value for this render/regeneration of an ISR page,
+              not something React Compiler would try to memoize away
+              across client re-renders — EnquiryForm's own client-side
+              effect further corrects for ISR staleness, see its doc
+              comment. */}
+          <EnquiryForm
+            showOrganization
+            organizationLabel="Hospital/Pharmacy name"
+            // eslint-disable-next-line react-hooks/purity
+            renderedAt={Date.now()}
+          />
         </div>
       </div>
     </div>

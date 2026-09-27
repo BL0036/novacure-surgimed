@@ -327,3 +327,24 @@ model Enquiry {
   @@map("enquiries")
 }
 
+// ---------------------------------------------------------------------------
+// AdminLoginAttempt — Phase 13 §1. Records failed admin login attempts so
+// repeated failures can trigger a temporary lockout (see
+// src/lib/rate-limit.ts for the actual lockout math, kept DB-free/testable
+// there on purpose). `identifier` is `email|ip` (see
+// src/lib/rate-limit.ts loginAttemptIdentifier) rather than separate
+// columns — this table is only ever queried by that one combined key, so
+// there's no need to index email and ip independently. Rows are
+// short-lived: a successful login clears its identifier's rows, and
+// src/lib/admin/login-attempts.ts opportunistically deletes anything
+// older than a day, so this never needs its own cleanup job.
+// ---------------------------------------------------------------------------
+model AdminLoginAttempt {
+  id         String   @id @default(cuid())
+  identifier String
+  attemptedAt DateTime @default(now()) @map("attempted_at")
+
+  @@index([identifier, attemptedAt])
+  @@map("admin_login_attempts")
+}
+

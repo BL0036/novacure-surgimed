@@ -550,6 +550,6 @@ export async function listPublishedProductsForSitemap(
 }
 
 // Re-exported from ./format (not defined here) so Client Components can
-// import formatPrice without pulling in this file's `pg`/getPool() import
-// chain — see format.ts for why.
-export { formatPrice } from "./format";
+// import formatPrice/resolveVariantRefCode without pulling in this
+// file's `pg`/getPool() import chain — see format.ts for why.
+export { formatPrice, resolveVariantRefCode } from "./format";

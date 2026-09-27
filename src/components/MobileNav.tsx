@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { PRIMARY_NAV } from "@/lib/site";
 import { SearchForm } from "@/components/SearchForm";
@@ -12,10 +12,29 @@ import { SearchForm } from "@/components/SearchForm";
 // below the lg breakpoint.
 export function MobileNav() {
   const [open, setOpen] = useState(false);
+  const toggleButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Phase 13 §8 — Escape closes the panel and returns focus to the
+  // toggle button, the same way a native disclosure widget behaves.
+  // Without this, a keyboard user who opened the menu had no way to
+  // dismiss it short of tabbing all the way through every link inside
+  // it (or reaching one that happens to close it via onClick).
+  useEffect(() => {
+    if (!open) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+        toggleButtonRef.current?.focus();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
 
   return (
     <div className="lg:hidden">
       <button
+        ref={toggleButtonRef}
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}

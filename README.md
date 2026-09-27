@@ -840,3 +840,237 @@ for what pushing it actually needs (a remote URL and, most likely,
 credentials); nothing in this project's files names one, so this can't
 be resolved from inside a coding session — it needs the actual GitHub
 repo URL (and how to authenticate to it) from whoever owns the project.
+
+## Phase 13 — security + testing hardening
+
+**1. Admin login rate-limiting.** A DB table
+(`admin_login_attempts`, migration `20260926120000_phase13_security`),
+not an in-memory store — this app already runs one process against a
+shared Postgres, and an in-memory map would reset on every
+restart/redeploy and wouldn't be shared if this ever scales to more than
+one instance, defeating the point of remembering recent failures. 5
+failed attempts for the same email+IP pair within 15 minutes locks that
+pair out for 15 minutes, measured from the *most recent* failure (so a
+bot that keeps retrying during the cooldown stays locked out rather than
+"burning through" it — documented as deliberate in
+`src/lib/rate-limit.ts`). The actual lockout math
+(`checkLoginLockout`) is split into its own DB-free file so it's unit
+tested directly (11 tests) rather than only indirectly through a real
+login attempt; `src/lib/admin/login-attempts.ts` is the thin DB-backed
+layer around it (fails open on a DB error — a transient outage degrades
+to "no rate limiting," not "every admin locked out"). Client IP comes
+from `x-forwarded-for`/`x-real-ip`, falling back to a fixed string if
+neither is present. The login page shows a specific "try again in ~N
+minutes" message for a lockout (not the generic wrong-password message)
+since, unlike account enumeration, there's nothing sensitive about
+telling the person in front of the lockout that they're locked out.
+
+**2. Enquiry form spam protection.** Two independent checks, both in
+`src/lib/enquiry-validation.ts` (`isSpamSubmission`, DB-free, unit
+tested — 19 tests total in that file): a honeypot field
+(`companyWebsite`, visually hidden off-canvas — not `display:none`,
+since some bots specifically skip fields hidden that way — out of the
+tab order and `aria-hidden`, so it's invisible to keyboard/AT users too)
+and a minimum-2-second time-to-submit check. Either one tripping makes
+`createEnquiryAction` return the exact same `{status: "success"}` a
+genuine submission gets, without writing anything to the database — a
+bot has no differently-worded error to learn from either way. The
+timing check needed more thought than it looks: the render timestamp has
+to be baked into the initial HTML (not set by client JS after the fact),
+because this form's `useActionState` submission already works without
+JS via React's normal progressive-enhancement POST, and a no-JS visitor
+needs that field populated too. For the product-page form (only ever
+mounted client-side, after the "Request this product" toggle) that's
+just `Date.now()` at mount. For the always-rendered
+`/for-hospitals-pharmacies` form, the timestamp comes from a `Server
+Component` prop (`renderedAt={Date.now()}` in that page) — but that page
+is ISR-cached (`revalidate = 3600`), so a naive per-request timestamp
+would actually be frozen at last regeneration and could be up to an hour
+stale, making the timing check trivially pass for a bot hitting the
+cached page. `EnquiryForm` corrects for this with a one-time
+`useEffect` that re-anchors to the browser's real clock after mount —
+a no-JS submission can't benefit from that correction and just uses the
+(safely-stale-in-one-direction-only) server value, so this is a
+security improvement for JS-enabled visitors, not something correctness
+depends on. Both of these impurity points (`Date.now()` in a Server
+Component's render, `setState` in an effect) needed a documented
+`eslint-disable-next-line` — this repo's `react-hooks` rules flag both
+as impure/anti-patterns by default; the disables explain why each one
+is a deliberate, safe exception rather than removing the lint coverage
+for the file.
+
+**3. Admin image upload validation**, in `src/lib/admin/images.ts`,
+before the file ever reaches Vercel Blob: a content-type allowlist
+(JPEG/PNG/WebP only — replacing the old "starts with `image/`" check,
+which would have also accepted e.g. `image/svg+xml` or `image/gif`) with
+a specific error message, and an 8MB size cap.
+
+**4. Raw-query audit — result: already clean, nothing to fix.** There
+is no `$queryRaw`/`$executeRaw` anywhere in this codebase — this project
+uses `pg` directly at runtime, not `@prisma/client` (see the "Why raw pg
+instead of `@prisma/client`" note above), so the actual audit was of
+every `pool.query()` call site instead (~30 across `catalog.ts`,
+`admin/products.ts`, `admin/enquiries.ts`, `admin/images.ts`,
+`enquiries.ts`, `verification-flags.ts`, `dashboard.ts`, and the
+session/auth files). Every one uses `$1`/`$2`-style parameterization.
+The handful of dynamically-built `WHERE`/`ORDER BY` fragments (sort
+order, size-label filter) are assembled from hardcoded SQL fragment
+strings selected by a value already checked against a small allowlist
+before it reaches the query builder (e.g. category page `sort` is
+validated against `["featured", "price-asc", "price-desc"]` at the page
+level) — never by concatenating a raw user string into the query.
+
+**5. `not-found`/`error` pages, site-wide and for admin.** This app has
+two separate root layouts ((site) and admin, each with their own
+`<html>/<body>` — see Phase 7's note), so there's no single root layout
+to hang a global 404 off of the usual way. Turned on Next 16's
+experimental `global-not-found.js` (`next.config.ts`
+`experimental.globalNotFound`) for exactly this case:
+`app/global-not-found.tsx` is a fully self-contained page (own
+`html`/`body`/fonts/`globals.css` import) that handles any URL matching
+neither segment. Verified live it's actually reachable this way — an
+arbitrary `/admin/some-bogus-path` with no matching page anywhere under
+`/admin` falls through to this file, not to a segment-level one, since
+no admin layout ever mounted to hang a nearer boundary off of.
+`(site)/not-found.tsx` and `admin/not-found.tsx` handle `notFound()`
+thrown *from inside* a page that did match (an unknown product/category
+slug on the storefront; an unknown product/enquiry id in admin) — these
+render wrapped by that segment's already-rendered layout, confirmed live
+by logging in and hitting a bogus admin product id: the response shows
+the real admin nav (Dashboard/Log out visible), not a bare page, because
+`(protected)/layout.tsx`'s auth check had already succeeded before the
+page itself threw. `(site)/error.tsx` and `admin/error.tsx` are
+Client Component error boundaries for each segment (this Next version
+renamed the reset callback from `reset` to `retry` — checked
+`node_modules/next/dist/docs/.../10-error-handling.md` directly per
+`AGENTS.md`'s instruction, since this was a real breaking change from
+what training data would assume); `global-error.tsx` is a last-resort,
+self-contained fallback for a failure in one of the two root layouts
+themselves, which a segment's own `error.tsx` can't catch. None of the
+three error boundaries ever render `error.message` or `error.digest` —
+only `console.error(error)` — since a Client Component error (unlike a
+Server Component one) still carries its real message in production, and
+the only way to guarantee nothing internal reaches a visitor is to never
+print any part of `error` in the UI at all.
+
+**6. Vitest expansion** — 51 new tests across 4 new files (61 total,
+up from 10): `rate-limit.test.ts` (11), `enquiry-validation.test.ts`
+(19, covers both the pre-existing required-fields/quantity-parsing logic
+now extracted into `src/lib/enquiry-validation.ts`, and the new spam
+checks), `SizeChart.test.ts` (14, `isSizeChartData` exported for this
+purpose — good/partial/malformed `measurementData` shapes), and
+`format.test.ts` (7, covers the pre-existing untested `formatPrice` plus
+the newly-extracted `resolveVariantRefCode`, pulled out of
+`VariantSelector`'s JSX into its own function specifically so it's
+testable without rendering the component — placed in `format.ts`, not
+`catalog.ts`, for the same reason `formatPrice` already lived there:
+`catalog.ts` imports `pg`/`getPool()`, which doesn't bundle for a Client
+Component). All 61 pass.
+
+**7. Playwright smoke test** — `e2e/enquiry-and-admin.spec.ts` (new
+`playwright.config.ts`, `@playwright/test` installed), covering both
+requested flows: browse a category → product → submit enquiry → appears
+in `/admin/enquiries`; and admin login → edit a product (short
+description, reverted after — see "don't change product data") → log
+out. Discovers real seeded content (first category, first product)
+rather than hardcoding catalogue-specific names/slugs. **Known
+limitation, disclosed rather than silently left broken:**
+`@playwright/test` is installed and the spec/config type-check and lint
+cleanly, but this test has **not actually been run** in this sandbox —
+Playwright's browser binaries download from
+`playwright.azureedge.net`/`cdn.playwright.dev`, which are outside this
+project's network egress allowlist, so `npx playwright install` cannot
+complete here. See `e2e/README.md` for prerequisites (seeded admin,
+`E2E_ADMIN_EMAIL`/`E2E_ADMIN_PASSWORD`) and run it once in a normal dev
+environment or CI before trusting it the way this phase's green Vitest
+run can be trusted.
+
+**8. Accessibility audit.** Labels: every form field project-wide
+already used a real `<label htmlFor>`/`id` pair (`FormField.tsx`) —
+nothing to fix. Alt text: all three `next/image` usages
+(`SiteHeader`'s logo, `ProductGallery`'s main + thumbnail images, the
+admin product-edit image list) were already correct, including
+`ProductGallery`'s thumbnails' intentional `alt=""` — each thumbnail is
+a `<button aria-label="Show image N of M">` wrapping a decorative image,
+so the accessible name comes from the button, not the image; giving the
+image its own alt text too would have doubled the announcement for a
+screen reader user. Real gap found and fixed: `MobileNav` had no
+keyboard way to dismiss the open panel short of tabbing through every
+link inside it — added an `Escape`-closes-and-returns-focus handler,
+the way a native disclosure widget behaves.
+
+**9. Internal link crawl — result: no dead links found.** Traced every
+`href` in `SiteHeader`/`MobileNav`'s nav, `SiteFooter`, breadcrumbs
+(category/product pages), and cross-links (search results, size guide
+anchors, brand/category pages) against the actual route tree. Every
+static nav/footer link (`/shop`, `/brands`, `/categories`, `/guides`,
+`/for-hospitals-pharmacies`, `/about`, `/contact`, `/product-finder`,
+`/size-guide`) has a matching page. Dynamic links checked against their
+actual value sources: category `sort` params against the validated
+allowlist (see §4 above), `/size-guide#${slug}` anchors against real
+`id={slug}` elements on that page, `/brands/${slug}`/`/categories/${slug}`
+against real brand/category slugs. One fragile-but-currently-working
+pattern flagged rather than "fixed" (nothing is actually broken today):
+the search-results page links to
+`/${product.brandSlug}/${product.categorySlug}/${product.slug}`, which
+only resolves correctly today because the one existing brand's slug
+literally is `"craftscare"`, matching the hardcoded
+`/craftscare/[category]/[product]` route segment — this will silently
+break the day a second brand is added with a URL structure of its own,
+worth a second look whenever multi-brand routing actually happens
+(nothing to do about it now without touching the (multi-brand-agnostic)
+route structure itself, out of scope for this phase).
+
+**10. Explicitly not done, per this phase's instructions:** no
+third-party CAPTCHA integration; no product/content data changed (the
+Playwright product-edit test reverts its own change; the honeypot/CSV
+audit work didn't touch any real catalogue row); no new customer-facing
+features.
+
+**Verification:** `npx tsc --noEmit`, `npx eslint .`, `npx prettier
+--check` (only on files this phase touched — pre-existing formatting
+drift in untouched files was left alone, not "fixed" as a side effect),
+and the full Vitest suite all pass (61/61). Installed Postgres 16 and
+ran every migration (including the new one) against a real local
+database; seeded a brand, an admin user, and one test product/variant;
+ran `next dev` and confirmed against real HTTP responses: the new
+product genuinely didn't show on its category page until its
+`publication_status` was set to `published` (a separate admin workflow
+column from the CSV-imported `status`, confirmed by reading the schema —
+not a bug, just a real gotcha worth noting for future manual testing);
+`global-not-found.tsx` renders for a genuinely unmatched
+`/admin/some-bogus-path` (confirmed by reading the raw HTML — title,
+`<h1>`, the "Go to homepage" link, `noindex` meta); `(site)/not-found.tsx`
+renders (with header/footer) for an invalid category slug;
+`admin/not-found.tsx` renders correctly in both states — redirecting to
+login when unauthenticated (verified the real `NEXT_REDIRECT;replace;
+/admin/login;307` in the dev-mode response), and, after a real login via
+a hand-constructed multipart POST reproducing React's Server Action
+form-submission protocol (extracting the `$ACTION_ID`/`$ACTION_REF`/
+`$ACTION_KEY` hidden fields from the real rendered login form — session
+cookie confirmed via `Set-Cookie: admin_session=...`), showing the real
+admin nav around the not-found content for a bogus product id.
+`for-hospitals-pharmacies` confirmed to render the honeypot field and a
+real baked-in `formRenderedAt` timestamp in its initial HTML. **What
+couldn't be confirmed live:** a full curl-reconstructed submission of
+the honeypot/timing-rejected and legitimate enquiry paths through to the
+database — the dev server (Turbopack) repeatedly hit a JS heap
+out-of-memory crash in this sandbox after a number of rapid
+restarts/requests, independent of anything in this phase's code (same
+symptom with a freshly cleared `.next` cache and a brand-new process).
+Given the time already spent chasing this environment issue, the spam
+logic's correctness rests on `isSpamSubmission`'s 19 direct unit tests
+(every branch: honeypot filled, too-fast timing, the exact
+`MIN_SUBMIT_TIME_MS` boundary, a missing/unparseable timestamp, clock
+skew) plus code review of `createEnquiryAction`'s wiring (spam check
+runs first, returns the identical success state, never reaches
+`createEnquiry`), rather than an additional live database check — worth
+a real click-through on a machine that doesn't hit this crash before
+Phase 14. `next build` still fails in this sandbox for the same
+pre-existing, unrelated reason as Phases 10–12 (`next/font` can't reach
+`fonts.googleapis.com`); confirmed this phase's new files
+(`global-not-found.tsx`, `global-error.tsx`) don't introduce a *new*
+failure by checking the build log names the same two pre-existing
+`(site)/layout.tsx`/`admin/layout.tsx` font imports as the cause, not
+anything new.
+

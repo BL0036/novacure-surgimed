@@ -6,6 +6,14 @@ import { getPool } from "@/lib/db";
 export type ProductImageType =
   "primary" | "secondary" | "detail" | "packaging" | "size_guide";
 
+// Phase 13 §3 — upload validation. An allowlist (not a denylist) of
+// content-types, checked before the file ever reaches Vercel Blob —
+// same reasoning as everywhere else in this file: reject clearly and
+// early rather than store something we'd rather not have.
+const ALLOWED_IMAGE_CONTENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+const MAX_IMAGE_UPLOAD_BYTES = 8 * 1024 * 1024; // 8MB
+
 export interface AdminProductImage {
   id: string;
   type: ProductImageType;
@@ -56,7 +64,15 @@ export async function saveProductImage(
   altText: string | null,
 ): Promise<string | null> {
   if (file.size === 0) return "No file was selected.";
-  if (!file.type.startsWith("image/")) return "That file isn't an image.";
+  // Phase 13 §3 — allowlist by content-type (not the old "starts with
+  // image/" check, which would also accept image/gif, image/svg+xml,
+  // etc.) with a clear, specific error naming what is accepted.
+  if (!ALLOWED_IMAGE_CONTENT_TYPES.has(file.type)) {
+    return "Only JPEG, PNG, or WebP images are allowed.";
+  }
+  if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+    return "Images must be 8MB or smaller.";
+  }
 
   const ext = file.name.includes(".") ? file.name.split(".").pop() : "jpg";
   const pathname = `products/${productId}/${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`;

@@ -12,7 +12,11 @@ interface SizeMeasurement {
 
 type SizeChartData = Record<string, SizeMeasurement>;
 
-function isSizeChartData(data: unknown): data is SizeChartData {
+// Exported (Phase 13 §6) so this shape check can be unit tested directly
+// against the range of measurementData shapes that can actually reach
+// it — good/partial/malformed JSON, empty objects, arrays, etc. — rather
+// than only indirectly through rendering the component.
+export function isSizeChartData(data: unknown): data is SizeChartData {
   if (!data || typeof data !== "object" || Array.isArray(data)) return false;
   const entries = Object.entries(data as Record<string, unknown>);
   if (entries.length === 0) return false;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, resolveVariantRefCode } from "@/lib/format";
 import type { ProductVariantSummary } from "@/lib/catalog";
 import { buildWhatsAppOrderUrl } from "@/lib/site";
 import { Button } from "@/components/ui/Button";
@@ -52,13 +52,14 @@ export function VariantSelector({
 
   if (!selected) {
     return (
-      <p className="text-body-muted">
-        No sizes are currently listed for this product.
-      </p>
+      <p className="text-body-muted">No sizes are currently listed for this product.</p>
     );
   }
 
-  const refCode = selected.manufacturerRefCode ?? productManufacturerRefCode;
+  const refCode = resolveVariantRefCode(
+    selected.manufacturerRefCode,
+    productManufacturerRefCode,
+  );
 
   const whatsAppMessage = `Hi, I'd like to order: ${productName} (${selected.sizeLabel}).\n${productUrl}`;
 

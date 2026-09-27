@@ -8,6 +8,11 @@
 // message inline without a page navigation.
 
 import { createEnquiry } from "@/lib/enquiries";
+import {
+  isSpamSubmission,
+  parseEnquiryQuantity,
+  validateEnquiryFields,
+} from "@/lib/enquiry-validation";
 
 export interface EnquiryFormState {
   status: "idle" | "success" | "error";
@@ -29,21 +34,38 @@ export async function createEnquiryAction(
   _prevState: EnquiryFormState,
   formData: FormData,
 ): Promise<EnquiryFormState> {
+  // Phase 13 §2 — spam checks run first and, if tripped, return the
+  // same "success" state a genuine submission gets (see
+  // isSpamSubmission's doc comment) rather than any kind of error —
+  // nothing here tells a bot which check it failed, or that it failed
+  // one at all. Nothing is written to the database in that case.
+  const honeypotValue = str(formData, "companyWebsite");
+  const formRenderedAtRaw = formData.get("formRenderedAt");
+  const parsedRenderedAt =
+    typeof formRenderedAtRaw === "string" ? Number(formRenderedAtRaw) : NaN;
+  const formRenderedAt = Number.isFinite(parsedRenderedAt) ? parsedRenderedAt : null;
+
+  if (isSpamSubmission({ honeypotValue, formRenderedAt })) {
+    return { status: "success" };
+  }
+
   const customerName = str(formData, "customerName");
   const phone = str(formData, "phone");
   const addressOrArea = str(formData, "addressOrArea");
   const email = nullableStr(formData, "email");
   const organizationName = nullableStr(formData, "organizationName");
   const message = nullableStr(formData, "message");
+  const quantity = parseEnquiryQuantity(str(formData, "quantity"));
 
-  const parsedQuantity = Number.parseInt(str(formData, "quantity"), 10);
-  const quantity =
-    Number.isFinite(parsedQuantity) && parsedQuantity > 0 ? parsedQuantity : 1;
-
-  if (!customerName || !phone || !addressOrArea) {
+  const fieldsValidation = validateEnquiryFields({
+    customerName,
+    phone,
+    addressOrArea,
+  });
+  if (!fieldsValidation.valid) {
     return {
       status: "error",
-      error: "Name, phone, and address/area are required.",
+      error: fieldsValidation.error,
     };
   }
 
