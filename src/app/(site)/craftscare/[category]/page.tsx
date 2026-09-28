@@ -99,14 +99,14 @@ export default async function CraftscareCategoryPage({
   const basePath = `/craftscare/${slug}`;
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-6 py-20">
+    <div className="page-container py-20">
       <JsonLd
         data={breadcrumbJsonLd([
           { name: "Craftscare", path: "/brands/craftscare" },
           { name: category, path: basePath },
         ])}
       />
-      <p className="text-sm font-medium text-brand">
+      <p className="text-sm font-medium text-link">
         <Link href="/brands/craftscare" className="hover:underline">
           Craftscare
         </Link>
@@ -123,7 +123,7 @@ export default async function CraftscareCategoryPage({
       <p className="mt-4 text-sm">
         <Link
           href={`/size-guide#${slug}`}
-          className="rounded-sm text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="rounded-sm text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           Not sure of your size? See how to measure
         </Link>
@@ -134,7 +134,7 @@ export default async function CraftscareCategoryPage({
           No products published in this category yet.
         </p>
       ) : (
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {listing.products.map((product) => (
             <ProductCard
               key={product.id}
@@ -142,6 +142,7 @@ export default async function CraftscareCategoryPage({
               name={product.name}
               shortDescription={product.shortDescription}
               minPrice={product.minPrice}
+              image={product.image}
             />
           ))}
         </div>

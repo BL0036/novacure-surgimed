@@ -49,7 +49,7 @@ export default async function AdminEnquiryDetailPage({
                 href={`/craftscare/${enquiry.categorySlug}/${enquiry.productSlug}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-brand hover:underline"
+                className="text-link hover:underline"
               >
                 {enquiry.productName}
               </Link>

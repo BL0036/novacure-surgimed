@@ -23,6 +23,29 @@
   --warning-tint: #fffbeb;
   --danger: #b91c1c;
   --danger-tint: #fef2f2;
+
+  /* Visual upgrade — section rhythm, card depth, hero. --surface is the
+     "alternate" section background (very light blue-gray) so consecutive
+     sections stop being white-on-white. --icon is the line-icon color on
+     category tiles (brand blue in light mode, lifted in dark mode where
+     --brand itself is too dark to read on a near-black page). */
+  --surface: #f5f7fb;
+  --icon: var(--brand);
+  /* Text-link / accent-text color. Same as --brand in light mode; lifted in
+     dark mode because #0029ba on #0a0a0a is only 1.9:1 (fails WCAG AA),
+     while the lifted blue is ~8:1. Use text-link, not text-brand, for text. */
+  --link: var(--brand);
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.05), 0 4px 14px rgba(16, 24, 40, 0.06);
+  --shadow-card-hover: 0 2px 4px rgba(16, 24, 40, 0.06), 0 12px 28px rgba(16, 24, 40, 0.12);
+
+  /* Hero: very dark navy derived from the --brand hue (#0029ba, hue ~226),
+     not pure black. Same in light and dark mode — a dark hero is dark
+     either way. White on --hero-to is ~15:1, --hero-muted on it ~10:1
+     (both far above WCAG AA 4.5:1). */
+  --hero-from: #060b24;
+  --hero-to: #0f1f6b;
+  --hero-glow: #2a45d8;
+  --hero-muted: #c9d3f3;
 }
 
 @theme inline {
@@ -39,6 +62,10 @@
   --color-warning-tint: var(--warning-tint);
   --color-danger: var(--danger);
   --color-danger-tint: var(--danger-tint);
+  --color-surface: var(--surface);
+  --color-icon: var(--icon);
+  --color-link: var(--link);
+  --color-hero-muted: var(--hero-muted);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -60,6 +87,12 @@
     --warning-tint: #3a2a05;
     --danger: #f87171;
     --danger-tint: #3f1212;
+
+    --surface: #111318;
+    --icon: #8fa3ff;
+    --link: #8fa3ff;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.55);
   }
 }
 
@@ -103,5 +136,49 @@ body {
   }
   .text-small-muted {
     @apply text-xs text-muted;
+  }
+
+  /* Visual upgrade — ONE shared content width for the whole public site.
+     Root cause of the "pinned left / uneven margins" report: every page
+     and section hand-wrote its own container classes (max-w-6xl on the
+     header/footer/home, max-w-5xl on category/product/search, max-w-3xl
+     on every text page), so nothing shared a definition and edges never
+     lined up. Now: .page-container (wide pages, header, footer) and
+     .page-container-narrow (long-form text pages, still centered). */
+  .page-container {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+  .page-container-narrow {
+    @apply mx-auto w-full max-w-3xl px-4 sm:px-6 lg:px-8;
+  }
+  /* Consistent vertical rhythm between homepage sections. */
+  .section-y {
+    @apply py-12 sm:py-16 lg:py-20;
+  }
+  .text-display-heading {
+    @apply text-2xl font-semibold tracking-tight text-foreground sm:text-3xl;
+  }
+  .text-lead {
+    @apply text-base leading-relaxed text-muted;
+  }
+  /* Cards: subtle border + light shadow; interactive ones lift on hover
+     (a transition, not an animation). */
+  .card-surface {
+    @apply rounded-xl border border-border bg-background;
+    box-shadow: var(--shadow-card);
+  }
+  .card-interactive {
+    @apply transition duration-150 hover:-translate-y-0.5 hover:border-brand;
+  }
+  .card-interactive:hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+  /* Dark hero. Depth comes from one soft radial glow over a navy
+     gradient — no images, no animation. */
+  .hero-dark {
+    color: #ffffff;
+    background:
+      radial-gradient(60rem 28rem at 88% -12%, color-mix(in srgb, var(--hero-glow) 42%, transparent), transparent 65%),
+      linear-gradient(135deg, var(--hero-from) 0%, var(--hero-to) 100%);
   }
 }

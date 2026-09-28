@@ -1074,3 +1074,81 @@ failure by checking the build log names the same two pre-existing
 `(site)/layout.tsx`/`admin/layout.tsx` font imports as the cause, not
 anything new.
 
+
+## Visual upgrade decisions
+
+A styling/layout pass on the live storefront. **No copy, product data,
+database or migration changes**, no new pages, no new animation (only
+hover/focus transitions), no stock photography, no new dependencies.
+
+**Centering / alignment (root cause).** The homepage containers were in
+fact centered (`mx-auto max-w-6xl`); the "pinned left, empty right"
+impression came from single-column text capped at `max-w-xl`/`max-w-2xl`
+inside that container, with nothing beside it, on a page where every
+section was white on white. Underneath that, each area hand-wrote its own
+container classes: `max-w-6xl` on the header/footer/homepage, `max-w-5xl`
+on category/product/search, `max-w-3xl` on every text page — so edges
+never lined up between pages. Fix at the source: two shared utilities in
+`globals.css` — `.page-container` (`max-w-7xl`, responsive padding) for
+the header, footer, homepage, category/product/search, and
+`.page-container-narrow` (`max-w-3xl`, still centered) for long-form text
+pages — applied everywhere instead of per-section classes. Verified
+centered with no horizontal overflow at 1920, 1440, 1024 and 390px.
+
+**Hero.** New `components/Hero.tsx`: dark navy gradient derived from the
+`--brand` hue (not pure black) with one soft radial glow; white 4xl→5xl→
+3.5rem headline; two-column on `lg+`, image stacks below text on mobile.
+Buttons use new `inverse` / `inverseOutline` variants with white focus
+rings. The real Craftscare photo goes in `HERO_IMAGE` in `lib/site.ts`
+(`next/image`, `priority`, explicit width/height, alt text). Until it is
+supplied (`null`), a dashed, clearly-labelled "Craftscare product photo —
+coming soon" placeholder shows; nothing borrowed or stock is used. The old
+WordPress site was used as a mood reference only.
+
+**Trust row** (`HERO_TRUST_POINTS` in `lib/site.ts`), each line restating
+existing site facts: "Serving hospitals & pharmacies across Nepal" (hero
+tagline + Hospitals & pharmacies section); "Craftscare distributor in
+Nepal" (Craftscare brand section: "distributed in Nepal by NovaCure
+SurgiMed" — deliberately *not* "Authorized", which the site never claims);
+"Manufactured under ISO 9001, WHO-GMP & CE standards" (Craftscare brand
+section / certifications list). The third line is a shortened form of the
+existing certification list — owner to approve wording.
+
+**Category tiles.** Eleven inline SVG line icons (`CategoryIcon.tsx`, one
+24×24 grid, 1.5 stroke, round caps, no fill) — drawn inline rather than
+adding an icon library. `aria-hidden`; the text label remains the
+accessible name. Hover lifts the tile and inverts the icon chip; the
+existing focus ring is kept. A zero-width space after "/" lets
+"Lumbar/Abdominal" wrap on narrow tiles without changing the label.
+
+**Rhythm and cards.** Sections alternate white / `--surface`; shared
+vertical spacing via `.section-y`; `.card-surface` (border + light shadow)
+and `.card-interactive` (hover lift) are used by tiles, product cards and
+the CTA/contact blocks. The homepage's bordered CTA blocks became
+side-by-side cards on `sm+`.
+
+**Product card photos.** `ProductCard` takes an optional `image`. All four
+card queries in `catalog.ts` (category listing, search, related, featured)
+now select the product's primary photo (`type = 'primary'` first, else the
+oldest `available` photo; same availability rule as the product gallery)
+via one shared SQL fragment. With a photo: `next/image` (`fill`, lazy,
+`object-contain` in the same 4:3 box, alt = the photo's alt text, falling
+back to the product name). Without: the original placeholder, so cards do
+not change height. `next.config.ts` already allowed
+`*.public.blob.vercel-storage.com`; verified, unchanged. Category and
+search grids gain a 4th column at `xl` now that the container is wider.
+
+**Dark mode.** Added `--surface`, `--icon`, `--link`, shadow tokens, dark
+overrides. Found and fixed an existing contrast failure: `--brand`
+(#0029ba) as *text* on the dark background is 1.9:1 (fails WCAG AA). New
+`--link` token = `--brand` in light mode (unchanged) and #8fa3ff in dark
+(≈8:1); all 32 `text-brand` usages now use `text-link`. Hero pairs
+(measured): white on `--hero-to` 14.7:1, `--hero-muted` 9.9:1 (7.3:1 at the
+brightest part of the glow); muted text on `--surface` 5.6:1 light /
+7.3:1 dark.
+
+**Verification.** `tsc --noEmit` clean, `eslint .` clean, Vitest 61/61,
+`next build` completes (45/45 pages). The build was run in the sandbox with
+`next/font` temporarily stubbed (Google Fonts is unreachable there); the
+stub was reverted and is not in the commit. Visual checks were done with a
+headless browser against a local database.

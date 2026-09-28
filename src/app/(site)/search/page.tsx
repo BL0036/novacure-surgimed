@@ -29,7 +29,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
     : { results: [], total: 0, page: 1, pageSize: 20, totalPages: 1 };
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-6 py-20">
+    <div className="page-container py-20">
       <h1 className="text-page-title">Search</h1>
       <SearchForm defaultValue={query} className="mt-4 max-w-sm" />
 
@@ -46,7 +46,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
           </p>
 
           {result.results.length > 0 ? (
-            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {result.results.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -55,6 +55,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
                   shortDescription={product.shortDescription}
                   minPrice={product.minPrice}
                   eyebrow={product.categoryName}
+                  image={product.image}
                 />
               ))}
             </div>

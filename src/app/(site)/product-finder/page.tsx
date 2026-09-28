@@ -18,7 +18,7 @@ export const metadata: Metadata = buildMetadata({
 // and flag if real customer usage suggests otherwise.
 export default function ProductFinderPage() {
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-20">
+    <div className="page-container-narrow py-20">
       <h1 className="text-page-title">Product Finder</h1>
 
       <p className="mt-4 rounded-md border border-border bg-brand-tint px-4 py-3 text-sm text-foreground">
@@ -46,7 +46,7 @@ export default function ProductFinderPage() {
         </p>
         <Link
           href="/categories"
-          className="mt-2 inline-block text-sm text-brand hover:underline"
+          className="mt-2 inline-block text-sm text-link hover:underline"
         >
           Browse all categories →
         </Link>

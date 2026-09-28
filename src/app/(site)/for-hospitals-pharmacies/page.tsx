@@ -27,7 +27,7 @@ export const revalidate = 3600;
 // enquiry intake only, same as the request stated.
 export default function ForHospitalsPharmaciesPage() {
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-20">
+    <div className="page-container-narrow py-20">
       <p className="text-eyebrow">Wholesale &amp; institutional</p>
       <h1 className="text-page-title mt-2">For Hospitals &amp; Pharmacies</h1>
       <p className="text-body-muted mt-3">

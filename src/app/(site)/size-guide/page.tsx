@@ -67,7 +67,7 @@ export default async function SizeGuidePage() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-20">
+    <div className="page-container-narrow py-20">
       <h1 className="text-page-title">Size Guide</h1>
       <p className="text-body-muted mt-3">
         General measuring guidance by category. Full manufacturer size charts are
@@ -82,7 +82,7 @@ export default async function SizeGuidePage() {
               <p className="text-body font-medium">{category}</p>
               <Link
                 href={`/craftscare/${slug}`}
-                className="rounded-sm shrink-0 text-sm text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="rounded-sm shrink-0 text-sm text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 View products →
               </Link>
@@ -100,7 +100,7 @@ export default async function SizeGuidePage() {
                       <li key={product.slug}>
                         <Link
                           href={`/craftscare/${slug}/${product.slug}`}
-                          className="rounded-sm text-sm text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                          className="rounded-sm text-sm text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                         >
                           See real size chart: {product.name}
                         </Link>

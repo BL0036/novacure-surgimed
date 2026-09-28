@@ -9,7 +9,7 @@ import {
 export const metadata: Metadata = { title: "Enquiries" };
 
 const STATUS_BADGE: Record<EnquiryStatus, string> = {
-  new: "text-brand",
+  new: "text-link",
   contacted: "text-warning",
   confirmed: "text-success",
   fulfilled: "text-success",
@@ -43,7 +43,7 @@ export default async function AdminEnquiriesPage({
           href="/admin/enquiries"
           className={`-mb-px border-b-2 px-1 pb-2 ${
             !status
-              ? "border-brand font-medium text-brand"
+              ? "border-brand font-medium text-link"
               : "border-transparent text-muted hover:text-foreground"
           }`}
         >
@@ -55,7 +55,7 @@ export default async function AdminEnquiriesPage({
             href={`/admin/enquiries?status=${s}`}
             className={`-mb-px border-b-2 px-1 pb-2 ${
               status === s
-                ? "border-brand font-medium text-brand"
+                ? "border-brand font-medium text-link"
                 : "border-transparent text-muted hover:text-foreground"
             }`}
           >
@@ -81,7 +81,7 @@ export default async function AdminEnquiriesPage({
                 <td className="px-4 py-2.5 font-medium text-foreground">
                   <Link
                     href={`/admin/enquiries/${enquiry.id}`}
-                    className="hover:text-brand hover:underline"
+                    className="hover:text-link hover:underline"
                   >
                     {enquiry.customerName}
                   </Link>

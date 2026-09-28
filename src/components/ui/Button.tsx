@@ -1,7 +1,11 @@
 import Link from "next/link";
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost";
+// "inverse" / "inverseOutline" are for dark backgrounds (the homepage hero):
+// a solid white primary and a white-outlined secondary. Their focus ring is
+// white and marked `!` so it wins over the default brand-blue ring, which
+// would be invisible on navy.
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "inverse" | "inverseOutline";
 export type ButtonSize = "sm" | "md";
 
 interface ButtonOwnProps {
@@ -55,6 +59,10 @@ function variantClasses(variant: ButtonVariant, active?: boolean): string {
       return "border border-border text-foreground hover:bg-brand-tint hover:border-brand";
     case "ghost":
       return "text-foreground hover:bg-brand-tint";
+    case "inverse":
+      return "bg-white text-[#0a1450] hover:bg-[#e3e9fb] focus-visible:ring-white! focus-visible:ring-offset-[#060b24]!";
+    case "inverseOutline":
+      return "border border-white/70 text-white hover:border-white hover:bg-white/10 focus-visible:ring-white! focus-visible:ring-offset-[#060b24]!";
   }
 }
 

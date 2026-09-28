@@ -28,7 +28,7 @@ export default function GlobalNotFound() {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col items-center justify-center bg-background px-6 py-20 text-center text-foreground">
-        <p className="text-sm font-medium text-brand">404</p>
+        <p className="text-sm font-medium text-link">404</p>
         <h1 className="text-page-title mt-2">Page not found</h1>
         <p className="text-body-muted mt-3 max-w-sm">
           The page you&rsquo;re looking for doesn&rsquo;t exist, or may have moved.

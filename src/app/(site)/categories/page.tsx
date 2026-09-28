@@ -16,7 +16,7 @@ export const metadata: Metadata = buildMetadata({
 // second brand exists this becomes a real cross-brand aggregate.
 export default function CategoriesPage() {
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-20">
+    <div className="page-container-narrow py-20">
       <h1 className="text-page-title">Categories</h1>
       <p className="text-body-muted mt-3">
         All categories across carried brands. Currently these are Craftscare&rsquo;s
@@ -28,7 +28,7 @@ export default function CategoriesPage() {
           <li key={category}>
             <Link
               href={`/categories/${slugify(category)}`}
-              className="rounded-sm text-foreground transition-colors hover:text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              className="rounded-sm text-foreground transition-colors hover:text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               {category}
             </Link>

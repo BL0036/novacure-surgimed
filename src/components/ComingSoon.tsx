@@ -11,7 +11,7 @@ interface ComingSoonProps {
 // these with real listing/detail pages backed by the database.
 export function ComingSoon({ title, note, children }: ComingSoonProps) {
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-20">
+    <div className="page-container-narrow py-20">
       <h1 className="text-page-title">{title}</h1>
       <p className="text-body-muted mt-3">{note}</p>
       {children ? <div className="mt-8">{children}</div> : null}

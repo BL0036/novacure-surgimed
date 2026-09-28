@@ -11,7 +11,7 @@ export const metadata: Metadata = buildMetadata({
 
 export default function BrandsPage() {
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-20">
+    <div className="page-container-narrow py-20">
       <h1 className="text-page-title">Brands</h1>
       <p className="text-body-muted mt-3">
         Brands carried on the NovaCure platform. Each brand has its own categories and

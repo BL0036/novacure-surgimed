@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 export default function AdminNotFound() {
   return (
     <div className="mx-auto flex min-h-full w-full max-w-lg flex-1 flex-col items-center justify-center px-6 py-20 text-center">
-      <p className="text-sm font-medium text-brand">404</p>
+      <p className="text-sm font-medium text-link">404</p>
       <h1 className="text-page-title mt-2">Not found</h1>
       <p className="text-body-muted mt-3">
         That admin page doesn&rsquo;t exist, or the item it points to may have been

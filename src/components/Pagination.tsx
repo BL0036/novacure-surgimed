@@ -31,7 +31,7 @@ export function Pagination({
       {page > 1 ? (
         <Link
           href={hrefFor(page - 1)}
-          className="rounded-sm text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="rounded-sm text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           ← Previous
         </Link>
@@ -46,7 +46,7 @@ export function Pagination({
       {page < totalPages ? (
         <Link
           href={hrefFor(page + 1)}
-          className="rounded-sm text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="rounded-sm text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           Next →
         </Link>

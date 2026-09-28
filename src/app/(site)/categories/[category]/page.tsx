@@ -42,8 +42,8 @@ export default async function CategoryAggregatePage({ params }: PageProps) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-20">
-      <p className="text-sm font-medium text-brand">
+    <div className="page-container-narrow py-20">
+      <p className="text-sm font-medium text-link">
         <Link href="/categories" className="hover:underline">
           Categories
         </Link>
@@ -51,7 +51,7 @@ export default async function CategoryAggregatePage({ params }: PageProps) {
       <h1 className="text-page-title mt-2">{category}</h1>
       <p className="text-body-muted mt-3">
         Currently sourced from Craftscare only.{" "}
-        <Link href={`/craftscare/${slug}`} className="text-brand hover:underline">
+        <Link href={`/craftscare/${slug}`} className="text-link hover:underline">
           View in Craftscare
         </Link>
         . Real cross-brand listings are built once a second brand and real product pages

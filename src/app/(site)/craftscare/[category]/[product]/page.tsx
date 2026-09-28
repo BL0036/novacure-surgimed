@@ -77,7 +77,7 @@ export default async function CraftscareProductPage({ params }: PageProps) {
   const lowestPrice = product.variants.find((v) => v.retailPrice !== null)?.retailPrice ?? null;
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-6 py-20">
+    <div className="page-container py-20">
       <JsonLd
         data={breadcrumbJsonLd([
           { name: "Craftscare", path: "/brands/craftscare" },
@@ -180,6 +180,7 @@ export default async function CraftscareProductPage({ params }: PageProps) {
                 name={item.name}
                 shortDescription={item.shortDescription}
                 minPrice={item.minPrice}
+                image={item.image}
               />
             ))}
           </div>

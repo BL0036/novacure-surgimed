@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Products" };
 const STATUS_BADGE: Record<string, string> = {
   draft: "text-muted",
   needs_verification: "text-warning",
-  verified: "text-brand",
+  verified: "text-link",
   published: "text-success",
 };
 
@@ -72,7 +72,7 @@ export default async function AdminProductsPage({
                 <td className="px-4 py-2.5 font-medium text-foreground">
                   <Link
                     href={`/admin/products/${product.id}`}
-                    className="hover:text-brand hover:underline"
+                    className="hover:text-link hover:underline"
                   >
                     {product.name}
                   </Link>

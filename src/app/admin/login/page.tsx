@@ -28,7 +28,7 @@ export default async function AdminLoginPage({
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-sm flex-col justify-center px-6 py-20">
-      <p className="text-sm font-medium text-brand">NovaCure Admin</p>
+      <p className="text-sm font-medium text-link">NovaCure Admin</p>
       <h1 className="text-page-title mt-2">Log in</h1>
 
       {isLocked ? (

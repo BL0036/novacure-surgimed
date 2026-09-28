@@ -17,7 +17,7 @@ export const metadata: Metadata = buildMetadata({
 export default function SiteNotFound() {
   return (
     <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center px-6 py-20 text-center">
-      <p className="text-sm font-medium text-brand">404</p>
+      <p className="text-sm font-medium text-link">404</p>
       <h1 className="text-page-title mt-2">Page not found</h1>
       <p className="text-body-muted mt-3">
         We couldn&rsquo;t find the page you were looking for. It may have been moved, or

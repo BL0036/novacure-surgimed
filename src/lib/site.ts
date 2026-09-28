@@ -131,3 +131,32 @@ export interface BrandSummary {
 // Only Craftscare exists as of Phase 2. Adding a second brand later needs
 // a new Brand row + this array updated — no schema or route changes.
 export const BRANDS: BrandSummary[] = [{ name: "Craftscare", slug: "craftscare" }];
+
+// ---------------------------------------------------------------------------
+// Visual upgrade — homepage hero.
+//
+// HERO_IMAGE is the real Craftscare catalogue photo shown beside the hero
+// text. It is `null` until the owner supplies the photo; the hero then
+// renders a clearly-marked placeholder instead of any stock image (project
+// rule since Phase 1: nothing borrowed or fake is shown as if it were real).
+// To switch it on: save the photo in public/brand/ and set, e.g.
+//   { src: "/brand/craftscare-hero.jpg", width: 1200, height: 900,
+//     alt: "<what the photo actually shows>" }
+// ---------------------------------------------------------------------------
+export interface HeroImage {
+  src: string;
+  width: number;
+  height: number;
+  alt: string;
+}
+export const HERO_IMAGE: HeroImage | null = null;
+
+// Trust row under the hero buttons. Every item restates a fact already on
+// the site (About, Craftscare and Hospitals & pharmacies copy) — nothing
+// new is claimed. See README "Visual upgrade decisions" for the source of
+// each line.
+export const HERO_TRUST_POINTS = [
+  "Serving hospitals & pharmacies across Nepal",
+  "Craftscare distributor in Nepal",
+  "Manufactured under ISO 9001, WHO-GMP & CE standards",
+] as const;

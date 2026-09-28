@@ -7,7 +7,7 @@ import { MobileNav } from "@/components/MobileNav";
 export function SiteHeader() {
   return (
     <header className="relative border-b border-border bg-background">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-6 px-6 py-4">
+      <div className="page-container flex items-center justify-between gap-6 py-4">
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
           <Image
             src="/brand/novacure-logo.png"

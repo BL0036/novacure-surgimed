@@ -28,7 +28,7 @@ export default async function VerificationFlagsPage({
           href="/admin/verification-flags"
           className={`-mb-px border-b-2 px-1 pb-2 ${
             !showResolved
-              ? "border-brand font-medium text-brand"
+              ? "border-brand font-medium text-link"
               : "border-transparent text-muted hover:text-foreground"
           }`}
         >
@@ -38,7 +38,7 @@ export default async function VerificationFlagsPage({
           href="/admin/verification-flags?show=resolved"
           className={`-mb-px border-b-2 px-1 pb-2 ${
             showResolved
-              ? "border-brand font-medium text-brand"
+              ? "border-brand font-medium text-link"
               : "border-transparent text-muted hover:text-foreground"
           }`}
         >

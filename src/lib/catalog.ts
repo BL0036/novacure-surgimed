@@ -23,6 +23,13 @@ export interface CategoryRecord {
   slug: string;
 }
 
+/** Primary photo shown on a product card, or null when the product has no
+ *  available photo yet (the card then shows its placeholder). */
+export interface CardImage {
+  src: string;
+  alt: string | null;
+}
+
 export interface CatalogProductSummary {
   id: string;
   name: string;
@@ -30,6 +37,23 @@ export interface CatalogProductSummary {
   shortDescription: string | null;
   /** Lowest variant retail price for this product, as a decimal string, or null if unpriced. */
   minPrice: string | null;
+  /** Primary photo, if one has been uploaded and marked available. */
+  image?: CardImage | null;
+}
+
+// Visual upgrade — selects a product's card photo: prefer the row typed
+// "primary", otherwise the oldest available photo. Same availability rule
+// as the product page gallery (image_status = 'available' with a web_path).
+const CARD_IMAGE_SQL = `
+  (SELECT pi.web_path FROM product_images pi
+    WHERE pi.product_id = p.id AND pi.image_status = 'available' AND pi.web_path IS NOT NULL
+    ORDER BY (pi.type = 'primary') DESC, pi.created_at ASC LIMIT 1) AS image_src,
+  (SELECT pi.alt_text FROM product_images pi
+    WHERE pi.product_id = p.id AND pi.image_status = 'available' AND pi.web_path IS NOT NULL
+    ORDER BY (pi.type = 'primary') DESC, pi.created_at ASC LIMIT 1) AS image_alt`;
+
+function toCardImage(row: { image_src: string | null; image_alt: string | null }): CardImage | null {
+  return row.image_src ? { src: row.image_src, alt: row.image_alt } : null;
 }
 
 export interface ProductListResult {
@@ -161,9 +185,12 @@ export async function listCategoryProducts(
       slug: string;
       short_description: string | null;
       min_price: string | null;
+      image_src: string | null;
+      image_alt: string | null;
     }>(
       `SELECT p.id, p.name, p.slug, p.short_description,
-              (SELECT MIN(v.retail_price) FROM product_variants v WHERE v.product_id = p.id) AS min_price
+              (SELECT MIN(v.retail_price) FROM product_variants v WHERE v.product_id = p.id) AS min_price,
+              ${CARD_IMAGE_SQL}
        FROM products p
        WHERE ${whereClause}
        ORDER BY ${orderBy}
@@ -178,6 +205,7 @@ export async function listCategoryProducts(
         slug: r.slug,
         shortDescription: r.short_description,
         minPrice: r.min_price,
+        image: toCardImage(r),
       })),
       total,
       page,
@@ -236,10 +264,13 @@ export async function searchProducts(query: string, page = 1): Promise<SearchRes
       category_slug: string;
       brand_slug: string;
       min_price: string | null;
+      image_src: string | null;
+      image_alt: string | null;
     }>(
       `SELECT p.id, p.name, p.slug, p.short_description,
               c.name AS category_name, c.slug AS category_slug, b.slug AS brand_slug,
-              (SELECT MIN(v.retail_price) FROM product_variants v WHERE v.product_id = p.id) AS min_price
+              (SELECT MIN(v.retail_price) FROM product_variants v WHERE v.product_id = p.id) AS min_price,
+              ${CARD_IMAGE_SQL}
        FROM products p
        JOIN categories c ON c.id = p.category_id
        JOIN brands b ON b.id = p.brand_id
@@ -256,6 +287,7 @@ export async function searchProducts(query: string, page = 1): Promise<SearchRes
         slug: r.slug,
         shortDescription: r.short_description,
         minPrice: r.min_price,
+        image: toCardImage(r),
         categoryName: r.category_name,
         categorySlug: r.category_slug,
         brandSlug: r.brand_slug,
@@ -444,9 +476,12 @@ export async function getRelatedProducts(
       slug: string;
       short_description: string | null;
       min_price: string | null;
+      image_src: string | null;
+      image_alt: string | null;
     }>(
       `SELECT p.id, p.name, p.slug, p.short_description,
-              (SELECT MIN(v.retail_price) FROM product_variants v WHERE v.product_id = p.id) AS min_price
+              (SELECT MIN(v.retail_price) FROM product_variants v WHERE v.product_id = p.id) AS min_price,
+              ${CARD_IMAGE_SQL}
        FROM products p
        WHERE p.category_id = $1 AND p.id != $2 AND p.publication_status = 'published'
        ORDER BY p.updated_at DESC
@@ -459,6 +494,7 @@ export async function getRelatedProducts(
       slug: r.slug,
       shortDescription: r.short_description,
       minPrice: r.min_price,
+      image: toCardImage(r),
     }));
   } catch {
     return [];
@@ -487,9 +523,12 @@ export async function getFeaturedProducts(
       short_description: string | null;
       category_slug: string;
       min_price: string | null;
+      image_src: string | null;
+      image_alt: string | null;
     }>(
       `SELECT p.id, p.name, p.slug, p.short_description, c.slug AS category_slug,
-              (SELECT MIN(v.retail_price) FROM product_variants v WHERE v.product_id = p.id) AS min_price
+              (SELECT MIN(v.retail_price) FROM product_variants v WHERE v.product_id = p.id) AS min_price,
+              ${CARD_IMAGE_SQL}
        FROM products p
        JOIN categories c ON c.id = p.category_id
        JOIN brands b ON b.id = p.brand_id
@@ -505,6 +544,7 @@ export async function getFeaturedProducts(
       shortDescription: r.short_description,
       categorySlug: r.category_slug,
       minPrice: r.min_price,
+      image: toCardImage(r),
     }));
   } catch {
     return [];

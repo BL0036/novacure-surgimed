@@ -22,7 +22,7 @@ export const revalidate = 3600;
 
 export default function ContactPage() {
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-20">
+    <div className="page-container-narrow py-20">
       <p className="text-eyebrow">Get in touch</p>
       <h1 className="text-page-title mt-2">Contact us</h1>
 

@@ -42,20 +42,20 @@ export default async function AdminDashboardPage() {
         <h2 className="text-eyebrow">Quick actions</h2>
         <ul className="mt-3 flex flex-col gap-1 text-sm">
           <li>
-            <Link href="/admin/products/new" className="text-brand hover:underline">
+            <Link href="/admin/products/new" className="text-link hover:underline">
               + Add a new product
             </Link>
           </li>
           <li>
             <Link
               href="/admin/verification-flags"
-              className="text-brand hover:underline"
+              className="text-link hover:underline"
             >
               Review unresolved verification flags
             </Link>
           </li>
           <li>
-            <Link href="/admin/enquiries?status=new" className="text-brand hover:underline">
+            <Link href="/admin/enquiries?status=new" className="text-link hover:underline">
               Review new enquiries
             </Link>
           </li>

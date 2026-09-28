@@ -15,14 +15,14 @@ export const metadata: Metadata = buildMetadata({
 
 export default function CraftscareBrandPage() {
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-20">
+    <div className="page-container-narrow py-20">
       <JsonLd
         data={breadcrumbJsonLd([
           { name: "Brands", path: "/brands" },
           { name: "Craftscare", path: "/brands/craftscare" },
         ])}
       />
-      <p className="text-sm font-medium text-brand">Brand</p>
+      <p className="text-sm font-medium text-link">Brand</p>
       <h1 className="text-page-title mt-2">Craftscare</h1>
       <p className="text-body-muted mt-3 max-w-2xl">
         Craft&rsquo;s Care is an established Indian orthopaedic and rehabilitation
@@ -41,7 +41,7 @@ export default function CraftscareBrandPage() {
             <li key={category}>
               <Link
                 href={`/craftscare/${slugify(category)}`}
-                className="rounded-sm text-foreground transition-colors hover:text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="rounded-sm text-foreground transition-colors hover:text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 {category}
               </Link>
