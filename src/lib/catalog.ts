@@ -417,7 +417,14 @@ export async function getProductBySlug(
         `SELECT id, type, web_path, alt_text
          FROM product_images
          WHERE product_id = $1 AND image_status = 'available' AND web_path IS NOT NULL
-         ORDER BY type ASC`,
+         ORDER BY CASE type
+           WHEN 'primary' THEN 0
+           WHEN 'secondary' THEN 1
+           WHEN 'detail' THEN 2
+           WHEN 'size_guide' THEN 3
+           WHEN 'packaging' THEN 4
+           ELSE 5
+         END, created_at ASC`,
         [product.id],
       ),
     ]);

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 const ADMIN_NAV = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/products", label: "Products" },
+  { href: "/admin/products/bulk-images", label: "Bulk upload images" },
   { href: "/admin/verification-flags", label: "Verification flags" },
   { href: "/admin/enquiries", label: "Enquiries" },
 ];

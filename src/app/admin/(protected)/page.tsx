@@ -47,6 +47,11 @@ export default async function AdminDashboardPage() {
             </Link>
           </li>
           <li>
+            <Link href="/admin/products/bulk-images" className="text-link hover:underline">
+              Bulk upload product images
+            </Link>
+          </li>
+          <li>
             <Link
               href="/admin/verification-flags"
               className="text-link hover:underline"

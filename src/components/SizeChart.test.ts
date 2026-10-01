@@ -69,4 +69,24 @@ describe("isSizeChartData", () => {
   it("rejects a null entry value", () => {
     expect(isSizeChartData({ S: null })).toBe(false);
   });
+
+  // Phase 14 — weight-graded charts (kg), added alongside the original in/cm shape.
+  it("accepts the weight-graded shape (size -> { kg })", () => {
+    expect(
+      isSizeChartData({
+        Small: { kg: "25-45" },
+        Medium: { kg: "45-65" },
+        Large: { kg: "65-90" },
+        "X-Large": { kg: "Above 90" },
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects a kg value that isn't a string", () => {
+    expect(isSizeChartData({ Small: { kg: 45 } })).toBe(false);
+  });
+
+  it("accepts a row with both in/cm and kg present", () => {
+    expect(isSizeChartData({ S: { in: "28-32", cm: "71-81", kg: "45-65" } })).toBe(true);
+  });
 });
